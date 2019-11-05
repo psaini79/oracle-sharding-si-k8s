@@ -630,7 +630,7 @@ if [ -z "${connectStr}" ]; then
 fi
 
 if [ -z "${type}" ]; then
-   connectStr='notSet'
+   type='notSet'
 fi
 
 if  [ "${type}" == "sqlScript"]; then
