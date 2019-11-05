@@ -541,8 +541,6 @@ fi
 
 checkCatalogSetupStatus()
 {
-export ORACLE_HOME=$DB_HOME
-export PATH=$ORACLE_HOME/bin:$PATH
 host=$1
 port=1521
 cpdb=$3
@@ -562,9 +560,6 @@ echo $output
 
 setupGSMCatalog()
 {
-export ORACLE_HOME=$DB_HOME
-export PATH=$ORACLE_HOME/bin:$PATH
-
 IFS='; ' read -r -a sarray   <<< "$SHARD_PARAMS"
 for element in "${sarray[@]}"
 do
@@ -595,8 +590,6 @@ fi
 
 configureGSMCatalog()
 {
-export ORACLE_HOME=$DB_HOME
-export PATH=$ORACLE_HOME/bin:$PATH
 chost=$1
 cport=1521
 cpdb=$3
@@ -618,10 +611,6 @@ executeGSM "$cmd1"
 
 setupGSMShard()
 {
-
-export ORACLE_HOME=$DB_HOME
-export PATH=$ORACLE_HOME/bin:$PATH
-
 SHARD_HOSTNAME=$1
 SHARD_CDB_PORT=1521
 SHARD_CDB_SID=$2
