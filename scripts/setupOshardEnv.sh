@@ -266,7 +266,7 @@ print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="exec DBMS_SCHEDULER.SET_AGENT_REGISTRATION_PASS('${ORACLE_PASSWORD}');"
+cmd1="exec DBMS_SCHEDULER.SET_AGENT_REGISTRATION_PASS('${ORACLE_PWD}');"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd1"  "$pdbConnStr"
@@ -614,16 +614,12 @@ if [ -z "${connectStr}" ]; then
 fi
 
 print_message "Executing query $sqlQuery using connectString \"${connectStr}\""
-
-echo "**************** BEGIN - $sqlQuery : ${connectStr}*******************" >> /tmp/sqllog.output
-"$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF >> /tmp/sql.output
-set verify off heading off pagesize 0
+sqlOutput=$("$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF 
 $sqlQuery;
 EOF
+)
 
-
-echo "*****************************ENDS*************************" >> /tmp/sqllog.output
-
+print_message "SqlOutput : $sqlOutput"
 }
 
 ############################################################################## Execute SQl Function ends here #################################
