@@ -8,9 +8,13 @@ export PASSWD_FILE="/etc/oraclepwd/password"
 export SHARD_ADMIN_USER="mysdbadmin"
 export PDB_ADMIN_USER="pdbadmin"
 export ORACLE_PWD=$(cat ${PASSWD_FILE} )
+export PDB_SQL_SCRIPT="/tmp/pdb.sql"
 export TOP_PID=$$
 
 rm -f /tmp/sqllog.output
+rm -f $PDB_SQL_SCRIPT
+rm -f $LOGFILE
+
 #################################### Print and Exit Functions Begin Here #######################
 error_exit() {
 local NOW=$(date +"%m-%d-%Y %T %Z")
@@ -236,41 +240,50 @@ setupCatalogPDB()
 #pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${DB_HOST}:1521/${ORACLE_PDB}"
 pdbConnStr=" /as sysdba"
 
-cmd1="alter session set container=${ORACLE_PDB}; create user ${SHARD_ADMIN_USER} identified by ${ORACLE_PWD};"
+sqlScript="${PDB_SQL_SCRIPT}"
+
+echo  "alter session set container=${ORACLE_PDB};" > "${sqlScript}"
+echo  "create user ${SHARD_ADMIN_USER} identified by ${ORACLE_PWD};" >> "${sqlScript}"
+echo  "grant connect, create session, gsmadmin_role to ${SHARD_ADMIN_USER} ;" >> "${sqlScript}"
+echo  "grant inherit privileges on user SYS to GSMADMIN_INTERNAL;" >> "${sqlScript}"
+echo  "execute dbms_xdb.sethttpport(8080);" >> ${sqlScript}
+echo  "exec DBMS_SCHEDULER.SET_AGENT_REGISTRATION_PASS('${ORACLE_PWD}');" >> "${sqlScript}"
+executeSQL "$cmd1"  "$pdbConnStr" "sqlScript"
+
 # cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1"  "$pdbConnStr"
+#print_message "Sending query to sqlplus to execute $cmd1"
+#executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="alter session set container=${ORACLE_PDB}; grant connect, create session, gsmadmin_role to ${SHARD_ADMIN_USER} ;"
+#cmd1="alter session set container=${ORACLE_PDB}; grant connect, create session, gsmadmin_role to ${SHARD_ADMIN_USER} ;"
 # cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1"  "$pdbConnStr"
+#print_message "Sending query to sqlplus to execute $cmd1"
+#executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="alter session set container=${ORACLE_PDB}; grant inherit privileges on user SYS to GSMADMIN_INTERNAL;"
+#cmd1="alter session set container=${ORACLE_PDB}; grant inherit privileges on user SYS to GSMADMIN_INTERNAL;"
 # cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1"  "$pdbConnStr"
+#print_message "Sending query to sqlplus to execute $cmd1"
+#executeSQL "$cmd1"  "$pdbConnStr"
 
 
 
-cmd1="alter session set container=${ORACLE_PDB}; execute dbms_xdb.sethttpport##8080%;"
+#cmd1="alter session set container=${ORACLE_PDB}; execute dbms_xdb.sethttpport##8080%;"
 # cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1"  "$pdbConnStr" "shellFunc"
+#print_message "Sending query to sqlplus to execute $cmd1"
+#executeSQL "$cmd1"  "$pdbConnStr" "shellFunc"
 
 
-cmd1="alter session set container=${ORACLE_PDB}; @$ORACLE_HOME/rdbms/admin/prvtrsch.plb;"
+#cmd1="alter session set container=${ORACLE_PDB}; @$ORACLE_HOME/rdbms/admin/prvtrsch.plb;"
 # cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1"  "$pdbConnStr"
+#print_message "Sending query to sqlplus to execute $cmd1"
+#executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="alter session set container=${ORACLE_PDB}; exec DBMS_SCHEDULER.SET_AGENT_REGISTRATION_PASS('${ORACLE_PWD}');"
+#cmd1="alter session set container=${ORACLE_PDB}; exec DBMS_SCHEDULER.SET_AGENT_REGISTRATION_PASS('${ORACLE_PWD}');"
 # cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1"  "$pdbConnStr"
+#print_message "Sending query to sqlplus to execute $cmd1"
+#executeSQL "$cmd1"  "$pdbConnStr"
 
 
 }
@@ -606,7 +619,7 @@ executeSQL()
 {
 sqlQuery=$1
 connectStr=$2
-convertStr=$3
+type=$3
 
 if [ -z "${sqlQuery}" ]; then
   error_exit "Empty sqlQuery passed to sqlplus. Operation Failed"
@@ -616,23 +629,24 @@ if [ -z "${connectStr}" ]; then
    error_exit "Empty connectStr  passed to sqlplus. Operation Failed"
 fi
 
-if [ -z "${connectStr}" ]; then
+if [ -z "${type}" ]; then
    connectStr='notSet'
 fi
 
-
-if [ "${convertStr}" == "shellFunc" ]; then
-  sqlQuery1=$( echo $sqlQuery | tr "##" "(" )
-  sqlQuery=$( echo $sqlQuery | tr "%" ")" )
-fi
-
+if  [ "${type}" == "sqlScript"]; then
+print_message "Executing sql script using connectString \"${connectStr}\""
+sqlOutput=$( "$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF
+@ ${PDB_SQL_SCRIPT}
+EOF
+)
+else
 print_message "Executing query $sqlQuery using connectString \"${connectStr}\""
 sqlOutput=$( "$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF 
 $sqlQuery
 EOF
 )
-
 print_message "SqlOutput : $sqlOutput"
+fi
 }
 
 ############################################################################## Execute SQl Function ends here #################################
