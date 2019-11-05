@@ -548,7 +548,7 @@ ccdb=$2
 uname="sys"
 cpasswd=${ORACLE_PWD}
 
-output=$( "$ORACLE_HOME"/bin/sqlplus -s "$uname/$cpasswd@//$host:$port/$ccdb" <<EOF
+output=$( "$ORACLE_HOME"/bin/sqlplus -s "$uname/$cpasswd@//$host:$port/$ccdb as sysdba" <<EOF
        set heading off feedback off verify off
        select status from shardtable;
        exit
