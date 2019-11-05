@@ -242,12 +242,14 @@ pdbConnStr=" /as sysdba"
 
 sqlScript="${PDB_SQL_SCRIPT}"
 
+print_message "Settup Sql Script to setup Catalog PDB"
 echo  "alter session set container=${ORACLE_PDB};" > "${sqlScript}"
 echo  "create user ${SHARD_ADMIN_USER} identified by ${ORACLE_PWD};" >> "${sqlScript}"
 echo  "grant connect, create session, gsmadmin_role to ${SHARD_ADMIN_USER} ;" >> "${sqlScript}"
 echo  "grant inherit privileges on user SYS to GSMADMIN_INTERNAL;" >> "${sqlScript}"
 echo  "execute dbms_xdb.sethttpport(8080);" >> ${sqlScript}
 echo  "exec DBMS_SCHEDULER.SET_AGENT_REGISTRATION_PASS('${ORACLE_PWD}');" >> "${sqlScript}"
+print_message "cat ${sqlScript}"
 executeSQL "$cmd1"  "$pdbConnStr" "sqlScript"
 
 # cmd=$(eval echo "$cmd1")
@@ -633,7 +635,7 @@ if [ -z "${type}" ]; then
    type='notSet'
 fi
 
-if  [ "${type}" == "sqlScript"]; then
+if  [ "${type}" == "sqlScript" ]; then
 print_message "Executing sql script using connectString \"${connectStr}\""
 sqlOutput=$( "$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF
 @ ${PDB_SQL_SCRIPT}
