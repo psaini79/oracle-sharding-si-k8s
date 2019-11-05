@@ -550,7 +550,7 @@ cpasswd=${ORACLE_PWD}
 
 output=$( "$ORACLE_HOME"/bin/sqlplus -s "$uname/$cpasswd@//$host:$port/$ccdb as sysdba" <<EOF
        set heading off feedback off verify off
-       select status from shardtable;
+       select status from shardsetup;
        exit
 EOF
 )
