@@ -134,7 +134,7 @@ print_message "Sending query to sqlplus to execute $cmd"
 executeSQL  "$cmd"   "$localconnectStr"
 
 
-cmd1="spool /tmp/setup_grants_privs.lst; @$ORACLE_HOME/rdbms/admin/setCatalogDBPrivs.sql"
+cmd1="@$ORACLE_HOME/rdbms/admin/setCatalogDBPrivs.sql;"
 cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd"
 executeSQL  "$cmd"   "$localconnectStr"
@@ -214,7 +214,7 @@ cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd"
 executeSQL "$cmd" "$localconnectStr"
 
-cmd1="insert into shardsetup values('completed');commit;"
+cmd1="insert into shardsetup values('completed');"
 cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd"
 executeSQL "$cmd" "$localconnectStr"
@@ -454,7 +454,7 @@ print_message "Sending query to sqlplus to execute $cmd"
 executeSQL  "$cmd"   "$localconnectStr"
 
 
-cmd1="insert into shardsetup values('completed');commit;"
+cmd1="insert into shardsetup values('completed')"
 cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd"
 executeSQL  "$cmd"   "$localconnectStr"
@@ -605,7 +605,7 @@ print_message "Executing query $sqlQuery using connectString ${connectStr}"
 
 sqlOutput=$( "$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF
 set feedback off verify off heading off pagesize 0
-$sqlQuery
+$sqlQuery;
 EOF
 )
 
