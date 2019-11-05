@@ -465,22 +465,74 @@ executeSQL  "$cmd"   "$localconnectStr"
 ######################################################################## Primary Shard Setup ends here #################################
 
 ######################################################################## GSM Setup Task Begin here #####################################
-setupGSMCatalog()
+setupGSM()
 {
+local cstatus='false'
+local sstatus='false'
 
+IFS='; ' read -r -a sarray   <<< "$SHARD_PARAMS"
+
+while [ "${cstatus}" == 'false' ]; do
+for element in "${sarray[@]}"
+do
+  print_message "1st String in Shard params $element"
+  type=$( echo $element | awk -F: '{print $NF }')
+  if [ "${type}" == "catalog" ]; then
+    host=$( echo $element | awk -F: '{print $1 }')
+    db=$( echo $element | awk -F: '{print $2 }')
+    pdb=$( echo $element | awk -F: '{print $3 }')
+    checkCatalogSetupStatus $host $db $pdb
+  fi
+
+
+done
+ sleep 60
+done
+
+
+}
+
+checkCatalogSetupStatus()
+{
 export ORACLE_HOME=$DB_HOME
 export PATH=$ORACLE_HOME/bin:$PATH
+host=$1
+port=1521
+cpdb=$3
+ccdb=$2
+uname="sys"
+cpasswd=${ORACLE_PWD}
 
-cmd1="create shardcatalog -database "\(DESCRIPTION=\(ADDRESS=\(PROTOCOL=tcp\)\(HOST=${SHARD_CATALOG_HOST}\)\(PORT=${CATALOG_DB_PORT}\)\)\(CONNECT_DATA=\(SERVICE_NAME=${CATALOG_PDB}\)\)\)" -user ${SHARD_ADMIN_USER}/${ORACLE_PWD} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${ORACLE_PWD}"
+output=$( "$ORACLE_HOME"/bin/sqlplus -s "$uname/$cpasswd@//$host:$port/$ccdb" <<EOF
+       set heading off feedback off verify off
+       select status from shardtable;
+       exit
+EOF
+)
+
+echo $output
+}
+
+setupGSMCatalog()
+{
+export ORACLE_HOME=$DB_HOME
+export PATH=$ORACLE_HOME/bin:$PATH
+chost=$1
+cport=1521
+cpdb=$3
+ccdb=$2
+cadmin=${SHARD_ADMIN_USER}
+cpasswd=${ORACLE_PWD}
+
+cmd1="create shardcatalog -database "\(DESCRIPTION=\(ADDRESS=\(PROTOCOL=tcp\)\(HOST=${chost}\)\(PORT=${cport}\)\)\(CONNECT_DATA=\(SERVICE_NAME=${cpdb}\)\)\)" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}"
 cmd=$(eval echo "$cmd1")
 print_message "Sending query to gsm to execute $cmd"
 executeGSM "$cmd"
 
-cmd1="add gsm -gsm sharddirector1 -listener 1521 -pwd ${ORACLE_PWD}  -catalog ${SHARD_CATALOG_HOST}:${CATALOG_DB_PORT}/${CATALOG_PDB}  -region region1"
+cmd1="add gsm -gsm ${GSM_HOST}  -listener 1521 -pwd ${cpasswd} -catalog ${chost}:${cport}/${cpdb}  -region region1"
 cmd=$(eval echo "$cmd1")
 print_message "Sending query to gsm to execute $cmd"
 executeGSM "$cmd"
-
 }
 
 setupGSMShard()
@@ -526,10 +578,11 @@ fi
 
 print_message "Executing GSM query $gsmQuery"
 
-"$ORACLE_HOME"/bin/gdsctl << EOF
+output=$( "$ORACLE_HOME"/bin/gdsctl << EOF
  $gsmQuery
  exit
 EOF
+)
 
 }
 ######################################################################## Execute GSM Statements Ends here ################################
@@ -550,11 +603,10 @@ fi
 
 print_message "Executing query $sqlQuery using connectString ${connectStr}"
 
-sqlOutput=$(
-echo "set feedback off verify off heading off pagesize 0
+sqlOutput=$( "$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF
+set feedback off verify off heading off pagesize 0
 $sqlQuery
-exit
-" | "$ORACLE_HOME"/bin/sqlplus -s "$connectStr"
+EOF
 )
 
 print_message "Output of SqlQuery ${sqlOutput}"
@@ -566,13 +618,13 @@ print_message "Output of SqlQuery ${sqlOutput}"
 #######################################
 ################## MAIN ###############
 
-if [ "${OP_TYPE}" == "primaryShard" ]; then
+if [ "${OP_TYPE}" == "primaryshard" ]; then
    print_message "Performing Checks before proceeding for setup"
    dbChecks
    print_message "OP_TYPE set to ${OP_TYPE}. Process to setup ${OP_TYPE} will begin now"
    resetPassword
    setupShardCDB
-elif [ "${OP_TYPE}" == "standbyShard" ]; then
+elif [ "${OP_TYPE}" == "standbyshard" ]; then
    print_message "Performing Checks before proceeding for setup"
    dbChecks
    print_message "OP_TYPE set to ${OP_TYPE}. Process to setup ${OP_TYPE} will begin now"
