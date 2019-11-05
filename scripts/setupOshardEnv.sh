@@ -73,24 +73,24 @@ else
         print_message "DB Port is set to $DB_PORT"
 fi
 
-if [ -z "${DB_FILE_DEST}" ]; then
-        print_message  "Set the DB_FILE_DEST is not set"
-        export DB_FILE_DEST="${ORACLE_BASE}/oradata/fast_recovery_area/${ORACLE_SID}"
+if [ -z "${DB_RECOVERY_FILE_DEST}" ]; then
+        print_message  "Set the DB_RECOVERY_FILE_DEST is not set"
+        export DB_RECOVERY_FILE_DEST="${ORACLE_BASE}/oradata/fast_recovery_area/${ORACLE_SID}"
 fi
 
 if [ -z "${DATA_PUMP_DIR}" ]; then
-        print_message  "DB_FILE_DEST ${DB_FILE_DEST} directory does not exist"
+        print_message  "DB_RECOVERY_FILE_DEST ${DB_RECOVERY_FILE_DEST} directory does not exist"
         export DATA_PUMP_DIR="${ORACLE_BASE}/oradata/data_pump_dir"
 fi
 
 if [ ! -d "${DATA_PUMP_DIR}" ]; then
         print_message  "DATA_PUMP_DIR ${DATA_PUMP_DIR} directory does not exist"
-        mkdir -p "${DB_FILE_DEST}"
+        mkdir -p "${DB_RECOVERY_FILE_DEST}"
 fi
 
-if [ ! -d "${DB_FILE_DEST}" ]; then
-        print_message  "DB_FILE_DEST ${DB_FILE_DEST} directory does not exist"
-        mkdir -p "${DB_FILE_DEST}"
+if [ ! -d "${DB_RECOVERY_FILE_DEST}" ]; then
+        print_message  "DB_RECOVERY_FILE_DEST ${DB_RECOVERY_FILE_DEST} directory does not exist"
+        mkdir -p "${DB_RECOVERY_FILE_DEST}"
 fi
 
 if [ -z "${DB_RECOVERY_FILE_DEST_SIZE}" ]; then
@@ -124,7 +124,7 @@ setupCatalog()
 
 localconnectStr="/ as sysdba"
 print_message "Setting up Paramteres in Spfile"
-cmd1="alter system set db_create_file_dest=\"${DB_FILE_DEST}\" scope=both;"
+cmd1="alter system set db_recovery_file_dest=\"${DB_RECOVERY_FILE_DEST}\" scope=both;"
 #cmd=$( eval echo "$cmd1" )
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd1" "$localconnectStr"
@@ -314,7 +314,7 @@ setupShardCDB()
 localconnectStr="/as sysdba"
 
 print_message "Setting up Paramteres in Spfile"
-cmd1="alter system set db_create_file_dest=\"${DB_FILE_DEST}\" scope=both;"
+cmd1="alter system set db_recovery_file_dest=\"${DB_RECOVERY_FILE_DEST}\" scope=both;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
