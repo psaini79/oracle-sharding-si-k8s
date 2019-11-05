@@ -615,7 +615,7 @@ fi
 
 print_message "Executing query $sqlQuery using connectString \"${connectStr}\""
 
-echo "**************** BEGIN - $sqlQuery : ${connectStr}*******************: >> /tmp/sqllog.output
+echo "**************** BEGIN - $sqlQuery : ${connectStr}*******************" >> /tmp/sqllog.output
 sqlOutput=$( "$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF >> /tmp/sql.output
 set verify off heading off pagesize 0
 $sqlQuery;
