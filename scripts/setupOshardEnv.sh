@@ -92,6 +92,13 @@ if [ ! -d "${DB_FILE_DEST}" ]; then
         mkdir -p "${DB_FILE_DEST}"
 fi
 
+if [ -z "${DB_RECOVERY_FILE_DEST_SIZE}" ]; then
+        print_message  "DB_RECOVERY_FILE_DEST_SIZE is  not set"
+        export DB_RECOVERY_FILE_DEST_SIZE="40G"
+else
+     print_message  "DB_RECOVERY_FILE_DEST_SIZE is set to ${DB_RECOVERY_FILE_DEST_SIZE}"
+fi
+
 }
 
 gsmChecks()
@@ -116,7 +123,7 @@ setupCatalog()
 
 localconnectStr="/ as sysdba"
 print_message "Setting up Paramteres in Spfile"
-cmd1="alter system set db_create_file_dest='${DB_FILE_DEST}' scope=both;"
+cmd1="alter system set db_create_file_dest=\"${DB_FILE_DEST}\" scope=both;"
 cmd=$( eval echo "$cmd1" )
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd" "$localconnectStr"
@@ -306,7 +313,7 @@ setupShardCDB()
 localconnectStr="/as sysdba"
 
 print_message "Setting up Paramteres in Spfile"
-cmd1="alter system set db_create_file_dest='${DB_FILE_DEST}' scope=both;"
+cmd1="alter system set db_create_file_dest=\"${DB_FILE_DEST}\" scope=both;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
