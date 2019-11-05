@@ -125,9 +125,9 @@ setupCatalog()
 localconnectStr="/ as sysdba"
 print_message "Setting up Paramteres in Spfile"
 cmd1="alter system set db_create_file_dest=\"${DB_FILE_DEST}\" scope=both;"
-cmd=$( eval echo "$cmd1" )
+#cmd=$( eval echo "$cmd1" )
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd" "$localconnectStr"
+executeSQL "$cmd1" "$localconnectStr"
 
 
 cmd1="alter system set open_links=16 scope=spfile;"
@@ -207,12 +207,12 @@ executeSQL  "$cmd1"   "$localconnectStr"
 cmd1="alter database force logging;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd", "$localconnectStr"
+executeSQL "$cmd1", "$localconnectStr"
 
 cmd1="ALTER PLUGGABLE DATABASE ALL OPEN;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd"  "$localconnectStr"
+executeSQL "$cmd1"  "$localconnectStr"
 
 if [ ! -z "${ORACLE_PDB}" ]; then
 setupCatalogPDB
@@ -222,12 +222,12 @@ fi
 cmd1="create table shardsetup (status varchar2(10));"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd" "$localconnectStr"
+executeSQL "$cmd1" "$localconnectStr"
 
 cmd1="insert into shardsetup values('completed');"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd" "$localconnectStr"
+executeSQL "$cmd1" "$localconnectStr"
 
 }
 
@@ -238,38 +238,38 @@ pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${DB_HOST}:1521/${ORACLE_PDB}"
 cmd1="create user ${SHARD_ADMIN_USER} identified by ${ORACLE_PWD};"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd"  "$pdbConnStr"
+executeSQL "$cmd1"  "$pdbConnStr"
 
 
 cmd1="grant connect, create session, gsmadmin_role to ${SHARD_ADMIN_USER} ;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd"  "$pdbConnStr"
+executeSQL "$cmd1"  "$pdbConnStr"
 
 
 cmd1="grant inherit privileges on user SYS to GSMADMIN_INTERNAL;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd"  "$pdbConnStr"
+executeSQL "$cmd1"  "$pdbConnStr"
 
 
 
 cmd1="execute \"dbms_xdb.sethttpport(8080)\";"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd"  "$pdbConnStr"
+executeSQL "$cmd1"  "$pdbConnStr"
 
 
 cmd1="@$ORACLE_HOME/rdbms/admin/prvtrsch.plb;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd"  "$pdbConnStr"
+executeSQL "$cmd1"  "$pdbConnStr"
 
 
 cmd1="exec DBMS_SCHEDULER.SET_AGENT_REGISTRATION_PASS('${ORACLE_PASSWORD}');"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd"  "$pdbConnStr"
+executeSQL "$cmd1"  "$pdbConnStr"
 
 
 }
@@ -286,25 +286,25 @@ pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${DB_HOST}:1521/${ORACLE_PDB}"
 cmd1="grant read,write on directory DATA_PUMP_DIR to GSMADMIN_INTERNAL;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd"  "$pdbConnStr"
+executeSQL "$cmd1"  "$pdbConnStr"
 
 
 cmd1="grant sysdg to GSMUSER;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd"  "$pdbConnStr"
+executeSQL "$cmd1"  "$pdbConnStr"
 
 
 cmd1="grant sysbackup to GSMUSER;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd"  "$pdbConnStr"
+executeSQL "$cmd1"  "$pdbConnStr"
 
 
 cmd1="set serveroutput on; execute DBMS_GSM_FIX.validateShard"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd"  "$pdbConnStr"
+executeSQL "$cmd1"  "$pdbConnStr"
 
 
 }
@@ -539,12 +539,12 @@ cpasswd=${ORACLE_PWD}
 cmd1="create shardcatalog -database \"(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=${chost})(PORT=${cport}))(CONNECT_DATA=(SERVICE_NAME=${cpdb})))\" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to gsm to execute $cmd1"
-executeGSM "$cmd"
+executeGSM "$cmd1"
 
 cmd1="add gsm -gsm ${GSM_HOST}  -listener 1521 -pwd ${cpasswd} -catalog ${chost}:${cport}/${cpdb}  -region region1"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to gsm to execute $cmd1"
-executeGSM "$cmd"
+executeGSM "$cmd1"
 }
 
 setupGSMShard()
@@ -561,17 +561,17 @@ SHARD_CDB_PDB=$3
 cmd1="add shardgroup -shardgroup primary_shardgroup -deploy_as primary -region region1"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to gsm to execute $cmd1"
-executeGSM "$cmd"
+executeGSM "$cmd1"
 
 cmd1="add cdb -connect ${SHARD_HOSTNAME}:${SHARD_CDB_PORT}:${SHARD_CDB_SID} -pwd ${ORACLE_PWD}"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to gsm to execute $cmd1"
-executeGSM "$cmd"
+executeGSM "$cmd1"
 
 cmd1="add shard -cdb ${SHARD_CDB_SID} -connect   ${SHARD_HOSTNAME}:${SHARD_CDB_PORT}/${SHARD_CDB_PDB} -shardgroup primary_shardgroup -pwd ${ORACLE_PWD}"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to gsm to execute $cmd1"
-executeGSM "$cmd"
+executeGSM "$cmd1"
 
 }
 
