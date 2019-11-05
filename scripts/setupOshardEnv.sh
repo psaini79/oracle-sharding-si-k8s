@@ -152,7 +152,8 @@ print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
 
 
-cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$DB_HOST\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
+#cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$DB_HOST\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
+cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$DB_HOST)(PORT=$DB_PORT)(PROTOCOL=tcp))\";"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
@@ -245,7 +246,7 @@ executeSQL "$cmd"  "$pdbConnStr"
 
 
 
-cmd1="execute dbms_xdb.sethttpport(8080);"
+cmd1="execute \"dbms_xdb.sethttpport(8080)\";"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd"  "$pdbConnStr"
@@ -527,7 +528,7 @@ cadmin=${SHARD_ADMIN_USER}
 cpasswd=${ORACLE_PWD}
 
 #cmd1="create shardcatalog -database "\(DESCRIPTION=\(ADDRESS=\(PROTOCOL=tcp\)\(HOST=${chost}\)\(PORT=${cport}\)\)\(CONNECT_DATA=\(SERVICE_NAME=${cpdb}\)\)\)" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}"
-cmd1="create shardcatalog -database "(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=${chost})(PORT=${cport}))(CONNECT_DATA=(SERVICE_NAME=${cpdb})))" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}"
+cmd1="create shardcatalog -database \"(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=${chost})(PORT=${cport}))(CONNECT_DATA=(SERVICE_NAME=${cpdb})))\" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd"
