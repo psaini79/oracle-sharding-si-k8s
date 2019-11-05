@@ -10,7 +10,7 @@ export PDB_ADMIN_USER="pdbadmin"
 export ORACLE_PWD=$(cat ${PASSWD_FILE} )
 export PDB_SQL_SCRIPT="/tmp/pdb.sql"
 export TOP_PID=$$
-
+export GSM_HOST=$(hostname)
 rm -f /tmp/sqllog.output
 rm -f $PDB_SQL_SCRIPT
 rm -f $LOGFILE
@@ -165,7 +165,7 @@ executeSQL  "$cmd1"   "$localconnectStr"
 
 
 #cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$DB_HOST\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
-cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$DB_HOST)(PORT=$DB_PORT)(PROTOCOL=tcp))\";"
+cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$DB_HOST)(PORT=$DB_PORT)(PROTOCOL=tcp))\" scope=both;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
@@ -300,28 +300,39 @@ setupShardPDB()
 #pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${DB_HOST}:1521/${ORACLE_PDB}"
 pdbConnStr=" /as sysdba"
 
-cmd1="alter session set container=${ORACLE_PDB}; grant read,write on directory DATA_PUMP_DIR to GSMADMIN_INTERNAL;"
+sqlScript="${PDB_SQL_SCRIPT}"
+print_message "Settup Sql Script to setup Catalog PDB"
+echo  "alter session set container=${ORACLE_PDB};" > "${sqlScript}"
+echo  "grant read,write on directory DATA_PUMP_DIR to GSMADMIN_INTERNAL;" >> "${sqlScript}"
+echo  "grant sysdg to GSMUSER;" >> "${sqlScript}"
+echo  "grant sysbackup to GSMUSER;" >> "${sqlScript}"
+echo  "execute DBMS_GSM_FIX.validateShard;" >> ${sqlScript}
+print_message "cat ${sqlScript}"
+executeSQL "$cmd1"  "$pdbConnStr" "sqlScript"
+
+
+#cmd1="alter session set container=${ORACLE_PDB}; grant read,write on directory DATA_PUMP_DIR to GSMADMIN_INTERNAL;"
 # cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1"  "$pdbConnStr"
+#print_message "Sending query to sqlplus to execute $cmd1"
+#executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="alter session set container=${ORACLE_PDB}; grant sysdg to GSMUSER;"
+#cmd1="alter session set container=${ORACLE_PDB}; grant sysdg to GSMUSER;"
 # cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1"  "$pdbConnStr"
+#print_message "Sending query to sqlplus to execute $cmd1"
+#executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="alter session set container=${ORACLE_PDB}; grant sysbackup to GSMUSER;"
+#cmd1="alter session set container=${ORACLE_PDB}; grant sysbackup to GSMUSER;"
 # cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1"  "$pdbConnStr"
+#print_message "Sending query to sqlplus to execute $cmd1"
+#executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="alter session set container=${ORACLE_PDB}; set serveroutput on; execute DBMS_GSM_FIX.validateShard"
+#cmd1="alter session set container=${ORACLE_PDB}; set serveroutput on; execute DBMS_GSM_FIX.validateShard"
 # cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1"  "$pdbConnStr"
+#print_message "Sending query to sqlplus to execute $cmd1"
+#executeSQL "$cmd1"  "$pdbConnStr"
 
 
 }
@@ -416,7 +427,7 @@ executeSQL  "$cmd1"   "$localconnectStr"
 
 
 #cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$DB_HOST\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
-cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$DB_HOST)(PORT=$DB_PORT)(PROTOCOL=tcp))\";"
+cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$DB_HOST)(PORT=$DB_PORT)(PROTOCOL=tcp))\" scope=both;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
@@ -498,9 +509,12 @@ setupGSM()
 local cstatus='false'
 local sstatus='false'
 
+setupGSMCatalog
+
 IFS='; ' read -r -a sarray   <<< "$SHARD_PARAMS"
 
-while [ "${cstatus}" == 'false' ]; do
+count=0
+while [ ${count} -lt 30  ]; do
 for element in "${sarray[@]}"
 do
   print_message "1st String in Shard params $element"
@@ -509,14 +523,19 @@ do
     host=$( echo $element | awk -F: '{print $1 }')
     db=$( echo $element | awk -F: '{print $2 }')
     pdb=$( echo $element | awk -F: '{print $3 }')
-    checkCatalogSetupStatus $host $db $pdb
+    coutput=$( checkCatalogSetupStatus $host $db $pdb )
+    if [ "${coutput}" == 'completed' ] ;then
+      setupGSMCatalog $host $db $pdb
+      break 
+    fi
   fi
-
-
 done
  sleep 60
 done
 
+if [ "${coutput}" != 'completed' ] ;then
+ error_exit "Shard Catalog is not setup, Unable to proceed futher"
+fi
 
 }
 
@@ -542,6 +561,39 @@ echo $output
 }
 
 setupGSMCatalog()
+{
+export ORACLE_HOME=$DB_HOME
+export PATH=$ORACLE_HOME/bin:$PATH
+
+IFS='; ' read -r -a sarray   <<< "$SHARD_PARAMS"
+for element in "${sarray[@]}"
+do
+  print_message "1st String in Shard params $element"
+  type=$( echo $element | awk -F: '{print $NF }')
+  if [ "${type}" == "catalog" ]; then
+    host=$( echo $element | awk -F: '{print $1 }')
+    db=$( echo $element | awk -F: '{print $2 }')
+    pdb=$( echo $element | awk -F: '{print $3 }')
+fi
+done
+
+count=0
+while [ ${count} -lt 30  ]; do
+    coutput=$( checkCatalogSetupStatus $host $db $pdb )
+    if [ "${coutput}" == 'completed' ] ;then
+        configureGSMCatalog $host $db $pdb
+        break
+    fi
+  sleep 60
+done
+
+if [ "${coutput}" != 'completed' ] ;then
+ error_exit "Shard Catalog is not setup, Unable to proceed futher"
+fi
+
+}
+
+configureGSMCatalog()
 {
 export ORACLE_HOME=$DB_HOME
 export PATH=$ORACLE_HOME/bin:$PATH
