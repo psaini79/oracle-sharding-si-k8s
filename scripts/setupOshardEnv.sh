@@ -118,90 +118,91 @@ localconnectStr="/ as sysdba"
 print_message "Setting up Paramteres in Spfile"
 cmd1="alter system set db_create_file_dest='${DB_FILE_DEST}' scope=both;"
 cmd=$( eval echo "$cmd1" )
-print_message "Sending query to sqlplus to execute $cmd"
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd" "$localconnectStr"
 
 
 cmd1="alter system set open_links=16 scope=spfile;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter system set open_links_per_instance=16 scope=spfile;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="@$ORACLE_HOME/rdbms/admin/setCatalogDBPrivs.sql;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 print_message "cat /tmp/setup_grants_privs.lst"
 
 cmd1="alter user gsmcatuser account unlock;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter user gsmcatuser identified by $ORACLE_PWD;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$DB_HOST\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter system set db_recovery_file_dest_size=${DB_RECOVERY_FILE_DEST_SIZE} scope=both;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="shutdown immediate;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="startup mount;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter database archivelog;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter database open;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter database flashback on;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter database force logging;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd", "$localconnectStr"
 
 cmd1="ALTER PLUGGABLE DATABASE ALL OPEN;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd"  "$localconnectStr"
 
 if [ ! -z "${ORACLE_PDB}" ]; then
@@ -210,13 +211,13 @@ fi
 
 
 cmd1="create table shardsetup (status varchar2(10));"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd" "$localconnectStr"
 
 cmd1="insert into shardsetup values('completed');"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd" "$localconnectStr"
 
 }
@@ -226,39 +227,39 @@ setupCatalogPDB()
 pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${DB_HOST}:1521/${ORACLE_PDB}"
 
 cmd1="create user ${SHARD_ADMIN_USER} identified by ${ORACLE_PWD};"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd"  "$pdbConnStr"
 
 
 cmd1="grant connect, create session, gsmadmin_role to ${SHARD_ADMIN_USER} ;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd"  "$pdbConnStr"
 
 
 cmd1="grant inherit privileges on user SYS to GSMADMIN_INTERNAL;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd"  "$pdbConnStr"
 
 
 
 cmd1="execute dbms_xdb.sethttpport(8080);"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd"  "$pdbConnStr"
 
 
 cmd1="@$ORACLE_HOME/rdbms/admin/prvtrsch.plb;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd"  "$pdbConnStr"
 
 
 cmd1="exec DBMS_SCHEDULER.SET_AGENT_REGISTRATION_PASS('${ORACLE_PASSWORD}');"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd"  "$pdbConnStr"
 
 
@@ -274,26 +275,26 @@ setupShardPDB()
 pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${DB_HOST}:1521/${ORACLE_PDB}"
 
 cmd1="grant read,write on directory DATA_PUMP_DIR to GSMADMIN_INTERNAL;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd"  "$pdbConnStr"
 
 
 cmd1="grant sysdg to GSMUSER;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd"  "$pdbConnStr"
 
 
 cmd1="grant sysbackup to GSMUSER;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd"  "$pdbConnStr"
 
 
 cmd1="set serveroutput on; execute DBMS_GSM_FIX.validateShard"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd"  "$pdbConnStr"
 
 
@@ -305,141 +306,142 @@ localconnectStr="/as sysdba"
 
 print_message "Setting up Paramteres in Spfile"
 cmd1="alter system set db_create_file_dest='${DB_FILE_DEST}' scope=both;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter system set open_links=16 scope=spfile;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter system set open_links_per_instance=16 scope=spfile;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter user gsmrootuser account unlock;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter user gsmrootuser identified by ${ORACLE_PWD}  container=all;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="grant sysdg to gsmrootuser;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="grant sysbackup to gsmrootuser;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter user GSMUSER account unlock;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter user GSMUSER identified by ${ORACLE_PWD} container=all;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="grant sysdg to GSMUSER;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="grant sysbackup to GSMUSER;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter system set dg_broker_start=true scope=both;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="create or replace directory DATA_PUMP_DIR as ${DATA_PUMP_DIR};"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="grant read,write on directory ${DATA_PUMP_DIR} to GSMADMIN_INTERNAL;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
-cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$DB_HOST\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+#cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$DB_HOST\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
+cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$DB_HOST)(PORT=$DB_PORT)(PROTOCOL=tcp))\";"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter system set db_recovery_file_dest_size=${DB_RECOVERY_FILE_DEST_SIZE} scope=both;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="shutdown immediate;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="startup mount;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter database archivelog;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter database open;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter database flashback on;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter database force logging;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="ALTER PLUGGABLE DATABASE ALL OPEN;"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 if [ ! -z "${ORACLE_PDB}" ]; then
@@ -449,15 +451,15 @@ setupShardPDB
 fi
 
 cmd1="create table shardsetup (status varchar2(10));"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="insert into shardsetup values('completed')"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd"
-executeSQL  "$cmd"   "$localconnectStr"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 
 }
@@ -524,14 +526,15 @@ ccdb=$2
 cadmin=${SHARD_ADMIN_USER}
 cpasswd=${ORACLE_PWD}
 
-cmd1="create shardcatalog -database "\(DESCRIPTION=\(ADDRESS=\(PROTOCOL=tcp\)\(HOST=${chost}\)\(PORT=${cport}\)\)\(CONNECT_DATA=\(SERVICE_NAME=${cpdb}\)\)\)" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to gsm to execute $cmd"
+#cmd1="create shardcatalog -database "\(DESCRIPTION=\(ADDRESS=\(PROTOCOL=tcp\)\(HOST=${chost}\)\(PORT=${cport}\)\)\(CONNECT_DATA=\(SERVICE_NAME=${cpdb}\)\)\)" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}"
+cmd1="create shardcatalog -database "(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=${chost})(PORT=${cport}))(CONNECT_DATA=(SERVICE_NAME=${cpdb})))" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd"
 
 cmd1="add gsm -gsm ${GSM_HOST}  -listener 1521 -pwd ${cpasswd} -catalog ${chost}:${cport}/${cpdb}  -region region1"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to gsm to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd"
 }
 
@@ -547,18 +550,18 @@ SHARD_CDB_SID=$2
 SHARD_CDB_PDB=$3
 
 cmd1="add shardgroup -shardgroup primary_shardgroup -deploy_as primary -region region1"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to gsm to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd"
 
 cmd1="add cdb -connect ${SHARD_HOSTNAME}:${SHARD_CDB_PORT}:${SHARD_CDB_SID} -pwd ${ORACLE_PWD}"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to gsm to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd"
 
 cmd1="add shard -cdb ${SHARD_CDB_SID} -connect   ${SHARD_HOSTNAME}:${SHARD_CDB_PORT}/${SHARD_CDB_PDB} -shardgroup primary_shardgroup -pwd ${ORACLE_PWD}"
-cmd=$(eval echo "$cmd1")
-print_message "Sending query to gsm to execute $cmd"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd"
 
 }
@@ -601,10 +604,10 @@ if [ -z "${connectStr}" ]; then
    error_exit "Empty connectStr  passed to sqlplus. Operation Failed"
 fi
 
-print_message "Executing query $sqlQuery using connectString ${connectStr}"
+print_message "Executing query $sqlQuery using connectString \"${connectStr}\""
 
 sqlOutput=$( "$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF
-set feedback off verify off heading off pagesize 0
+set verify off heading off pagesize 0
 $sqlQuery;
 EOF
 )
@@ -643,4 +646,3 @@ elif [ "${OP_TYPE}" == "gsm" ]; then
 else
   print_message "OP_TYPE must be set to (gsm|catalog|primaryshard|standbyshard)"
 fi
-
