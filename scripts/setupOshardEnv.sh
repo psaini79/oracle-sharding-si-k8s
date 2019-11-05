@@ -233,40 +233,41 @@ executeSQL "$cmd1" "$localconnectStr"
 
 setupCatalogPDB()
 {
-pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${DB_HOST}:1521/${ORACLE_PDB}"
+#pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${DB_HOST}:1521/${ORACLE_PDB}"
+pdbConnStr=" /as sysdba"
 
-cmd1="create user ${SHARD_ADMIN_USER} identified by ${ORACLE_PWD};"
+cmd1="alter session set container=${ORACLE_PDB}; create user ${SHARD_ADMIN_USER} identified by ${ORACLE_PWD};"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="grant connect, create session, gsmadmin_role to ${SHARD_ADMIN_USER} ;"
+cmd1="alter session set container=${ORACLE_PDB}; grant connect, create session, gsmadmin_role to ${SHARD_ADMIN_USER} ;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="grant inherit privileges on user SYS to GSMADMIN_INTERNAL;"
+cmd1="alter session set container=${ORACLE_PDB}; grant inherit privileges on user SYS to GSMADMIN_INTERNAL;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd1"  "$pdbConnStr"
 
 
 
-cmd1="execute \"dbms_xdb.sethttpport(8080)\";"
+cmd1="alter session set container=${ORACLE_PDB}; execute dbms_xdb.sethttpport##8080%;"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL "$cmd1"  "$pdbConnStr" "shellFunc"
+
+
+cmd1="alter session set container=${ORACLE_PDB}; @$ORACLE_HOME/rdbms/admin/prvtrsch.plb;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="@$ORACLE_HOME/rdbms/admin/prvtrsch.plb;"
-# cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1"  "$pdbConnStr"
-
-
-cmd1="exec DBMS_SCHEDULER.SET_AGENT_REGISTRATION_PASS('${ORACLE_PWD}');"
+cmd1="alter session set container=${ORACLE_PDB}; exec DBMS_SCHEDULER.SET_AGENT_REGISTRATION_PASS('${ORACLE_PWD}');"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd1"  "$pdbConnStr"
@@ -281,27 +282,28 @@ executeSQL "$cmd1"  "$pdbConnStr"
 setupShardPDB()
 {
 
-pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${DB_HOST}:1521/${ORACLE_PDB}"
+#pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${DB_HOST}:1521/${ORACLE_PDB}"
+pdbConnStr=" /as sysdba"
 
-cmd1="grant read,write on directory DATA_PUMP_DIR to GSMADMIN_INTERNAL;"
+cmd1="alter session set container=${ORACLE_PDB}; grant read,write on directory DATA_PUMP_DIR to GSMADMIN_INTERNAL;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="grant sysdg to GSMUSER;"
+cmd1="alter session set container=${ORACLE_PDB}; grant sysdg to GSMUSER;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="grant sysbackup to GSMUSER;"
+cmd1="alter session set container=${ORACLE_PDB}; grant sysbackup to GSMUSER;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd1"  "$pdbConnStr"
 
 
-cmd1="set serveroutput on; execute DBMS_GSM_FIX.validateShard"
+cmd1="alter session set container=${ORACLE_PDB}; set serveroutput on; execute DBMS_GSM_FIX.validateShard"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL "$cmd1"  "$pdbConnStr"
@@ -604,6 +606,7 @@ executeSQL()
 {
 sqlQuery=$1
 connectStr=$2
+convertStr=$3
 
 if [ -z "${sqlQuery}" ]; then
   error_exit "Empty sqlQuery passed to sqlplus. Operation Failed"
@@ -611,6 +614,16 @@ fi
 
 if [ -z "${connectStr}" ]; then
    error_exit "Empty connectStr  passed to sqlplus. Operation Failed"
+fi
+
+if [ -z "${connectStr}" ]; then
+   connectStr='notSet'
+fi
+
+
+if [ "${convertStr}" == "shellFunc" ]; then
+  sqlQuery1=$( echo $sqlQuery | tr "##" "(" )
+  sqlQuery=$( echo $sqlQuery | tr "%" ")" )
 fi
 
 print_message "Executing query $sqlQuery using connectString \"${connectStr}\""
