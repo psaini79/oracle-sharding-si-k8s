@@ -614,8 +614,8 @@ if [ -z "${connectStr}" ]; then
 fi
 
 print_message "Executing query $sqlQuery using connectString \"${connectStr}\""
-sqlOutput=$("$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF 
-$sqlQuery;
+sqlOutput=$( "$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF 
+$sqlQuery
 EOF
 )
 
