@@ -139,7 +139,7 @@ cmd1="drop table shardsetup;"
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$systemStr"
 
-cmd1="alter system set db_create_file_dest=${DB_CREATE_FILE_DEST} scope=both;"
+cmd1="alter system set db_create_file_dest=\"${DB_CREATE_FILE_DEST}\" scope=both;"
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
 
@@ -297,7 +297,7 @@ cmd1="drop table shardsetup;"
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$systemStr"
 
-cmd1="alter system set db_create_file_dest=${DB_CREATE_FILE_DEST} scope=both;"
+cmd1="alter system set db_create_file_dest=\"${DB_CREATE_FILE_DEST}\" scope=both;"
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
 
@@ -497,11 +497,9 @@ for element in "${sarray[@]}"
 do
   print_message "1st String in Shard params $element"
   type=$( echo $element | awk -F: '{print $NF }')
-  if [ "${type}" == "catalog" ]; then
     host=$( echo $element | awk -F: '{print $1 }')
     db=$( echo $element | awk -F: '{print $2 }')
     pdb=$( echo $element | awk -F: '{print $3 }')
-fi
 done
 
 count=0
