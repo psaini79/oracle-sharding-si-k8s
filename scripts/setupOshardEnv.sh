@@ -116,9 +116,10 @@ gsmChecks()
  print_message "Performing GSM related checks"
  lordinal=$( hostname | awk -F "-" '{ print $NF }' )
  print_message "lordinal is set to ${lordinal}"
+ region_num=$((lordinal+1)
 if [ -z "${REGION}" ]; then
         print_message  "REGION is not set. Setting to region$lordinal"
-        export REGION="region${lordinal}"
+        export REGION="region${region_num}"
 fi
 
 if [ -z "${SHARD_GROUP_NAME}" ]; then
@@ -132,8 +133,8 @@ if [ -z "${SHARD_DEPLOYMENT_TYPE}" ]; then
 fi
 
 if [ -z "${SHARD_DIRECTOR_NAME}" ]; then
-        print_message  "SHARD_DIRECTOR_NAME is not set, it will set to sharddirector$lordinal"
-        export SHARD_DIRECTOR_NAME="sharddirector$lordinal"
+        print_message  "SHARD_DIRECTOR_NAME is not set, it will set to sharddirector${region_num}"
+        export SHARD_DIRECTOR_NAME="sharddirector${region_num}"
 fi
 }
 
