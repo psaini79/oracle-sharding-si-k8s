@@ -128,7 +128,7 @@ fi
 
 if [ -z "${SHARD_DEPLOYMENT_TYPE}" ]; then
         print_message  "SHARD_DEPLOYMENT_TYPE is not set, it will set to primary"
-        export SHARD_GROUP_NAME="primary"
+        export SHARD_DEPLOYMENT_TYPE="primary"
 fi
 
 if [ -z "${SHARD_DIRECTOR_NAME}" ]; then
