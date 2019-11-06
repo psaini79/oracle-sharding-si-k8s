@@ -123,7 +123,7 @@ fi
 
 if [ -z "${SHARD_GROUP_NAME}" ]; then
         print_message  "SHARD_GROUP_NAME is not set, it will set to primary_shard"
-        export SHARD_GROUP_NAME="primary_shard"
+        export SHARD_GROUP_NAME="primary_shardgroup"
 fi
 
 if [ -z "${SHARD_DEPLOYMENT_TYPE}" ]; then
@@ -647,12 +647,12 @@ cpdb=$3
 ccdb=$2
 cpasswd=${ORACLE_PWD}
 region="region1"
-shardGName=primary_shardgroup
-deployment_type="primary"
+shardGName="${SHARD_GROUP_NAME}"
+deployment_type="${SHARD_DEPLOYMENT_TYPE}"
 local gdsScript="/tmp/gdsScript.sql"
 admuser="${SHARD_ADMIN_USER}"
 
-echo "connect catalog ${admuser}/${cpasswd}" > "${gdsScript}" 
+echo "connect ${admuser}/${cpasswd}" > "${gdsScript}" 
 echo "add cdb -connect ${chost}:${cport}:${ccdb} -pwd ${cpasswd}" >> "${gdsScript}"
 echo "add shard -cdb ${ccdb} -connect ${chost}:${cport}/${cpdb} -shardgroup ${shardGName} -pwd ${cpasswd}" >> "${gdsScript}"
 echo "exit" >> "${gdsScript}"
