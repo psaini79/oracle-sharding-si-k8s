@@ -82,6 +82,11 @@ if [ -z "${DB_RECOVERY_FILE_DEST}" ]; then
         export DB_RECOVERY_FILE_DEST="${ORACLE_BASE}/oradata/fast_recovery_area/${ORACLE_SID}"
 fi
 
+if [ -z "${DB_CREATE_FILE_DEST}" ]; then
+        print_message  "Set the DB_CREATE_FILE_DEST is not set. Setting to ${ORACLE_BASE}/oradata/${ORACLE_SID}"
+        export DB_CREATE_FILE_DEST="${ORACLE_BASE}/oradata/${ORACLE_SID}"
+fi
+
 if [ -z "${DATA_PUMP_DIR}" ]; then
         print_message  "DATA_PUMP_DIR is not set, it will se to ${ORACLE_BASE}/oradata/data_pump_dir"
         export DATA_PUMP_DIR="${ORACLE_BASE}/oradata/data_pump_dir"
@@ -134,8 +139,11 @@ cmd1="drop table shardsetup;"
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$systemStr"
 
+cmd1="alter system set db_create_file_dest=${DB_CREATE_FILE_DEST} scope=both;"
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
+
 cmd1="alter system set db_recovery_file_dest_size=${DB_RECOVERY_FILE_DEST_SIZE} scope=both;"
-# cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
 
@@ -288,6 +296,10 @@ print_message "Setting up Paramteres in Spfile"
 cmd1="drop table shardsetup;"
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$systemStr"
+
+cmd1="alter system set db_create_file_dest=${DB_CREATE_FILE_DEST} scope=both;"
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 cmd1="alter system set db_recovery_file_dest_size=${DB_RECOVERY_FILE_DEST_SIZE} scope=both;"
 # cmd=$(eval echo "$cmd1")
