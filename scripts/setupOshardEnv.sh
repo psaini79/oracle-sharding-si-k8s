@@ -395,13 +395,13 @@ print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
 
 
-cmd1="create or replace directory DATA_PUMP_DIR as ${DATA_PUMP_DIR};"
+cmd1="create or replace directory DATA_PUMP_DIR as '${DATA_PUMP_DIR}';"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
 
 
-cmd1="grant read,write on directory ${DATA_PUMP_DIR} to GSMADMIN_INTERNAL;"
+cmd1="grant read,write on directory DATA_PUMP_DIR to GSMADMIN_INTERNAL;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
