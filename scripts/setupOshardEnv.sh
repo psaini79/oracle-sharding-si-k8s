@@ -116,7 +116,7 @@ gsmChecks()
  print_message "Performing GSM related checks"
  lordinal=$( hostname | awk -F "-" '{ print $NF }' )
  print_message "lordinal is set to ${lordinal}"
- region_num=$((lordinal+1)
+ region_num=$((lordinal+1))
 if [ -z "${REGION}" ]; then
         print_message  "REGION is not set. Setting to region$lordinal"
         export REGION="region${region_num}"
