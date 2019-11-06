@@ -543,7 +543,7 @@ print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd1"
 }
 
-setupGSMCatalog()
+setupGSMShard()
 {
 IFS='; ' read -r -a sarray   <<< "$SHARD_PARAMS"
 for element in "${sarray[@]}"
