@@ -114,7 +114,7 @@ fi
 gsmChecks()
 {
  print_message "Performing GSM related checks"
- lordinal= $( hostname | awk -F "-" '{ $NF }' )
+ lordinal=$( hostname | awk -F "-" '{ print $NF }' )
  print_message "lordinal is set to ${lordinal}"
 if [ -z "${REGION}" ]; then
         print_message  "REGION is not set. Setting to region$lordinal"
