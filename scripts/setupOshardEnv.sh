@@ -94,7 +94,7 @@ fi
 
 if [ ! -d "${DATA_PUMP_DIR}" ]; then
         print_message  "DATA_PUMP_DIR ${DATA_PUMP_DIR} directory does not exist"
-        mkdir -p "${DB_PUMP_DIR}"
+        mkdir -p "${DATA_PUMP_DIR}"
 fi
 
 if [ ! -d "${DB_RECOVERY_FILE_DEST}" ]; then
