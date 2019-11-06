@@ -127,7 +127,12 @@ setupCatalog()
 {
 
 localconnectStr="/ as sysdba"
+systemStr="system/${ORACLE_PWD}"
 print_message "Setting up Paramteres in Spfile"
+
+cmd1="drop table shardsetup;"
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$systemStr"
 
 cmd1="alter system set db_recovery_file_dest_size=${DB_RECOVERY_FILE_DEST_SIZE} scope=both;"
 # cmd=$(eval echo "$cmd1")
@@ -224,14 +229,12 @@ fi
 
 
 cmd1="create table shardsetup (status varchar2(10));"
-# cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1" "$localconnectStr"
+executeSQL "$cmd1" "$systemStr"
 
 cmd1="insert into shardsetup values('completed');"
-# cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL "$cmd1" "$localconnectStr"
+executeSQL "$cmd1" "$systemStr"
 
 }
 
@@ -251,42 +254,6 @@ echo  "execute dbms_xdb.sethttpport(8080);" >> ${sqlScript}
 echo  "exec DBMS_SCHEDULER.SET_AGENT_REGISTRATION_PASS('${ORACLE_PWD}');" >> "${sqlScript}"
 print_message "cat ${sqlScript}"
 executeSQL "$cmd1"  "$pdbConnStr" "sqlScript"
-
-# cmd=$(eval echo "$cmd1")
-#print_message "Sending query to sqlplus to execute $cmd1"
-#executeSQL "$cmd1"  "$pdbConnStr"
-
-
-#cmd1="alter session set container=${ORACLE_PDB}; grant connect, create session, gsmadmin_role to ${SHARD_ADMIN_USER} ;"
-# cmd=$(eval echo "$cmd1")
-#print_message "Sending query to sqlplus to execute $cmd1"
-#executeSQL "$cmd1"  "$pdbConnStr"
-
-
-#cmd1="alter session set container=${ORACLE_PDB}; grant inherit privileges on user SYS to GSMADMIN_INTERNAL;"
-# cmd=$(eval echo "$cmd1")
-#print_message "Sending query to sqlplus to execute $cmd1"
-#executeSQL "$cmd1"  "$pdbConnStr"
-
-
-
-#cmd1="alter session set container=${ORACLE_PDB}; execute dbms_xdb.sethttpport##8080%;"
-# cmd=$(eval echo "$cmd1")
-#print_message "Sending query to sqlplus to execute $cmd1"
-#executeSQL "$cmd1"  "$pdbConnStr" "shellFunc"
-
-
-#cmd1="alter session set container=${ORACLE_PDB}; @$ORACLE_HOME/rdbms/admin/prvtrsch.plb;"
-# cmd=$(eval echo "$cmd1")
-#print_message "Sending query to sqlplus to execute $cmd1"
-#executeSQL "$cmd1"  "$pdbConnStr"
-
-
-#cmd1="alter session set container=${ORACLE_PDB}; exec DBMS_SCHEDULER.SET_AGENT_REGISTRATION_PASS('${ORACLE_PWD}');"
-# cmd=$(eval echo "$cmd1")
-#print_message "Sending query to sqlplus to execute $cmd1"
-#executeSQL "$cmd1"  "$pdbConnStr"
-
 
 }
 
@@ -315,8 +282,12 @@ executeSQL "$cmd1"  "$pdbConnStr" "sqlScript"
 setupShardCDB()
 {
 localconnectStr="/as sysdba"
-
+systemStr="system/${ORACLE_PWD}"
 print_message "Setting up Paramteres in Spfile"
+
+cmd1="drop table shardsetup;"
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$systemStr"
 
 cmd1="alter system set db_recovery_file_dest_size=${DB_RECOVERY_FILE_DEST_SIZE} scope=both;"
 # cmd=$(eval echo "$cmd1")
@@ -463,15 +434,14 @@ setupShardPDB
 fi
 
 cmd1="create table shardsetup (status varchar2(10));"
-# cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL  "$cmd1"   "$localconnectStr"
+executeSQL  "$cmd1"   "$systemStr"
 
 
 cmd1="insert into shardsetup values('completed')"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL  "$cmd1"   "$localconnectStr"
+executeSQL  "$cmd1"   "$systemStr"
 
 
 }
@@ -485,45 +455,20 @@ local cstatus='false'
 local sstatus='false'
 
 setupGSMCatalog
-
-IFS='; ' read -r -a sarray   <<< "$SHARD_PARAMS"
-
-count=0
-while [ ${count} -lt 30  ]; do
-for element in "${sarray[@]}"
-do
-  print_message "1st String in Shard params $element"
-  type=$( echo $element | awk -F: '{print $NF }')
-  if [ "${type}" == "catalog" ]; then
-    host=$( echo $element | awk -F: '{print $1 }')
-    db=$( echo $element | awk -F: '{print $2 }')
-    pdb=$( echo $element | awk -F: '{print $3 }')
-    coutput=$( checkCatalogSetupStatus $host $db $pdb )
-    if [ "${coutput}" == 'completed' ] ;then
-      setupGSMCatalog $host $db $pdb
-      break 
-    fi
-  fi
-done
- sleep 60
-done
-
-if [ "${coutput}" != 'completed' ] ;then
- error_exit "Shard Catalog is not setup, Unable to proceed futher"
-fi
+setupGSMShard
 
 }
 
-checkCatalogSetupStatus()
+checkStatus()
 {
 host=$1
 port=1521
 cpdb=$3
 ccdb=$2
-uname="sys"
+uname="system"
 cpasswd=${ORACLE_PWD}
 
-output=$( "$ORACLE_HOME"/bin/sqlplus -s "$uname/$cpasswd@//$host:$port/$ccdb as sysdba" <<EOF
+output=$( "$ORACLE_HOME"/bin/sqlplus -s "$uname/$cpasswd@//$host:$port/$ccdb" <<EOF
        set heading off feedback off verify off
        select status from shardsetup;
        exit
@@ -548,14 +493,17 @@ fi
 done
 
 count=0
+if [ ! -z "${host}" ] && [ ! -z "${db}" ] && [ ! -z "${pdb}" ]
+then
 while [ ${count} -lt 30  ]; do
-    coutput=$( checkCatalogSetupStatus $host $db $pdb )
+    coutput=$( checkStatus $host $db $pdb )
     if [ "${coutput}" == 'completed' ] ;then
         configureGSMCatalog $host $db $pdb
         break
     fi
   sleep 60
 done
+fi
 
 if [ "${coutput}" != 'completed' ] ;then
  error_exit "Shard Catalog is not setup, Unable to proceed futher"
@@ -571,38 +519,71 @@ cpdb=$3
 ccdb=$2
 cadmin=${SHARD_ADMIN_USER}
 cpasswd=${ORACLE_PWD}
-
-#cmd1="create shardcatalog -database "\(DESCRIPTION=\(ADDRESS=\(PROTOCOL=tcp\)\(HOST=${chost}\)\(PORT=${cport}\)\)\(CONNECT_DATA=\(SERVICE_NAME=${cpdb}\)\)\)" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}"
+num=$( awk 'BEGIN {srand(); print srand()}' )
+gsm_name="director$num"
 cmd1="create shardcatalog -database \"(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=${chost})(PORT=${cport}))(CONNECT_DATA=(SERVICE_NAME=${cpdb})))\" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}"
-# cmd=$(eval echo "$cmd1")
 print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd1"
 
-cmd1="add gsm -gsm ${GSM_HOST}  -listener 1521 -pwd ${cpasswd} -catalog ${chost}:${cport}/${cpdb}  -region region1"
+cmd1="add gsm -gsm ${gsm_name}  -listener 1521 -pwd ${cpasswd} -catalog ${chost}:${cport}/${cpdb}  -region region1"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd1"
 }
 
-setupGSMShard()
+setupGSMCatalog()
 {
-SHARD_HOSTNAME=$1
-SHARD_CDB_PORT=1521
-SHARD_CDB_SID=$2
-SHARD_CDB_PDB=$3
+IFS='; ' read -r -a sarray   <<< "$SHARD_PARAMS"
+for element in "${sarray[@]}"
+do
+  print_message "1st String in Shard params $element"
+  type=$( echo $element | awk -F: '{print $NF }')
+  if [ "${type}" == "primaryshard" ]; then
+    host=$( echo $element | awk -F: '{print $1 }')
+    db=$( echo $element | awk -F: '{print $2 }')
+    pdb=$( echo $element | awk -F: '{print $3 }')
+fi
+done
 
-cmd1="add shardgroup -shardgroup primary_shardgroup -deploy_as primary -region region1"
-# cmd=$(eval echo "$cmd1")
+count=0
+if [ ! -z "${host}" ] && [ ! -z "${db}" ] && [ ! -z "${pdb}" ]
+then
+while [ ${count} -lt 30  ]; do
+    coutput=$( checkStatus $host $db $pdb )
+    if [ "${coutput}" == 'completed' ] ;then
+        configureGSMShard $host $db $pdb
+        break
+    fi
+  sleep 60
+done
+fi
+
+if [ "${coutput}" != 'completed' ] ;then
+ error_exit "Shard is not readi, Unable to proceed futher"
+fi
+
+}
+
+configureGSMShard()
+{
+chost=$1
+cport=1521
+cpdb=$3
+ccdb=$2
+cpasswd=${ORACLE_PWD}
+region="region1"
+shardGName=primary_shardgroup
+deployment_type="primary"
+
+cmd1="add shardgroup -shardgroup ${shardGName} -deploy_as ${deployment_type} -region ${region}"
 print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd1"
 
-cmd1="add cdb -connect ${SHARD_HOSTNAME}:${SHARD_CDB_PORT}:${SHARD_CDB_SID} -pwd ${ORACLE_PWD}"
-# cmd=$(eval echo "$cmd1")
+cmd1="add cdb -connect ${chost}:${cport}:${ccdb} -pwd ${cpasswd}"
 print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd1"
 
-cmd1="add shard -cdb ${SHARD_CDB_SID} -connect   ${SHARD_HOSTNAME}:${SHARD_CDB_PORT}/${SHARD_CDB_PDB} -shardgroup primary_shardgroup -pwd ${ORACLE_PWD}"
-# cmd=$(eval echo "$cmd1")
+cmd1="add shard -cdb ${ccdb} -connect ${chost}:${cport}/${cpdb} -shardgroup ${shardGName} -pwd ${cpasswd}"
 print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd1"
 
