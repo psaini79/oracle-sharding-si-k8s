@@ -492,7 +492,7 @@ echo $output
 
 setupGSMCatalog()
 {
-IFS='; ' read -r -a sarray   <<< "$SHARD_PARAMS"
+IFS='; ' read -r -a sarray   <<< "$CATALOG_PARAMS"
 for element in "${sarray[@]}"
 do
   print_message "1st String in Shard params $element"
@@ -532,7 +532,7 @@ ccdb=$2
 cadmin=${SHARD_ADMIN_USER}
 cpasswd=${ORACLE_PWD}
 num=$( awk 'BEGIN {srand(); print srand()}' )
-gsm_name="director$num"
+gsm_name="director1"
 cmd1="create shardcatalog -database \"(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=${chost})(PORT=${cport}))(CONNECT_DATA=(SERVICE_NAME=${cpdb})))\" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}"
 print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd1"
@@ -545,30 +545,30 @@ executeGSM "$cmd1"
 
 setupGSMShard()
 {
-IFS='; ' read -r -a sarray   <<< "$SHARD_PARAMS"
-for element in "${sarray[@]}"
+IFS='; ' read -r -a sarray   <<< "$PRIMARY_SHARD_PARAMS"
+arrLen=$( echo "${#sarray[@]}" )
+count1=0
+while [ ${count1} -lt ${arrLen} ];
 do
-  print_message "1st String in Shard params $element"
-  type=$( echo $element | awk -F: '{print $NF }')
-  if [ "${type}" == "primaryshard" ]; then
-    host=$( echo $element | awk -F: '{print $1 }')
-    db=$( echo $element | awk -F: '{print $2 }')
-    pdb=$( echo $element | awk -F: '{print $3 }')
-fi
-done
-
-count=0
-if [ ! -z "${host}" ] && [ ! -z "${db}" ] && [ ! -z "${pdb}" ]
-then
-while [ ${count} -lt 30  ]; do
-    coutput=$( checkStatus $host $db $pdb )
-    if [ "${coutput}" == 'completed' ] ;then
-        configureGSMShard $host $db $pdb
-        break
+ for element in "${sarray[@]}"
+ do
+   print_message "1st String in Shard params $element"
+     host=$( echo $element | awk -F: '{print $1 }')
+     db=$( echo $element | awk -F: '{print $2 }')
+     pdb=$( echo $element | awk -F: '{print $3 }')
+  if [ ! -z "${host}" ] && [ ! -z "${db}" ] && [ ! -z "${pdb}" ]
+  then
+     coutput=$( checkStatus $host $db $pdb )
+     if [ "${coutput}" == 'completed' ] ;then
+         configureGSMShard $host $db $pdb
+         count1=$( $count + 1 ) 
+     else
+      sleep 60 
     fi
-  sleep 60
+  fi
+ done
+  print_message "Count set to $count1"
 done
-fi
 
 if [ "${coutput}" != 'completed' ] ;then
  error_exit "Shard is not readi, Unable to proceed futher"
