@@ -450,8 +450,7 @@ print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$systemStr"
 
 
-cmd1="insert into shardsetup values('completed')"
-# cmd=$(eval echo "$cmd1")
+cmd1="insert into shardsetup values('completed');"
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$systemStr"
 
@@ -467,8 +466,17 @@ local cstatus='false'
 local sstatus='false'
 
 setupGSMCatalog
+startGSM
 setupGSMShard
 
+}
+
+startGSM()
+{
+
+cmd1="start gsm"
+print_message "Sending query to gsm to execute $cmd1"
+executeGSM "$cmd1"
 }
 
 checkStatus()
