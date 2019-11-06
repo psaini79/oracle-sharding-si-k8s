@@ -83,13 +83,13 @@ if [ -z "${DB_RECOVERY_FILE_DEST}" ]; then
 fi
 
 if [ -z "${DATA_PUMP_DIR}" ]; then
-        print_message  "DB_RECOVERY_FILE_DEST ${DB_RECOVERY_FILE_DEST} directory does not exist"
+        print_message  "DATA_PUMP_DIR is not set, it will se to ${ORACLE_BASE}/oradata/data_pump_dir"
         export DATA_PUMP_DIR="${ORACLE_BASE}/oradata/data_pump_dir"
 fi
 
 if [ ! -d "${DATA_PUMP_DIR}" ]; then
         print_message  "DATA_PUMP_DIR ${DATA_PUMP_DIR} directory does not exist"
-        mkdir -p "${DB_RECOVERY_FILE_DEST}"
+        mkdir -p "${DB_PUMP_DIR}"
 fi
 
 if [ ! -d "${DB_RECOVERY_FILE_DEST}" ]; then
@@ -128,6 +128,12 @@ setupCatalog()
 
 localconnectStr="/ as sysdba"
 print_message "Setting up Paramteres in Spfile"
+
+cmd1="alter system set db_recovery_file_dest_size=${DB_RECOVERY_FILE_DEST_SIZE} scope=both;"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
+
 cmd1="alter system set db_recovery_file_dest=\"${DB_RECOVERY_FILE_DEST}\" scope=both;"
 #cmd=$( eval echo "$cmd1" )
 print_message "Sending query to sqlplus to execute $cmd1"
@@ -171,14 +177,8 @@ print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
 
 
-cmd1="alter system set db_recovery_file_dest_size=${DB_RECOVERY_FILE_DEST_SIZE} scope=both;"
-# cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL  "$cmd1"   "$localconnectStr"
-
 
 cmd1="shutdown immediate;"
-
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
@@ -310,31 +310,6 @@ echo  "execute DBMS_GSM_FIX.validateShard;" >> ${sqlScript}
 print_message "cat ${sqlScript}"
 executeSQL "$cmd1"  "$pdbConnStr" "sqlScript"
 
-
-#cmd1="alter session set container=${ORACLE_PDB}; grant read,write on directory DATA_PUMP_DIR to GSMADMIN_INTERNAL;"
-# cmd=$(eval echo "$cmd1")
-#print_message "Sending query to sqlplus to execute $cmd1"
-#executeSQL "$cmd1"  "$pdbConnStr"
-
-
-#cmd1="alter session set container=${ORACLE_PDB}; grant sysdg to GSMUSER;"
-# cmd=$(eval echo "$cmd1")
-#print_message "Sending query to sqlplus to execute $cmd1"
-#executeSQL "$cmd1"  "$pdbConnStr"
-
-
-#cmd1="alter session set container=${ORACLE_PDB}; grant sysbackup to GSMUSER;"
-# cmd=$(eval echo "$cmd1")
-#print_message "Sending query to sqlplus to execute $cmd1"
-#executeSQL "$cmd1"  "$pdbConnStr"
-
-
-#cmd1="alter session set container=${ORACLE_PDB}; set serveroutput on; execute DBMS_GSM_FIX.validateShard"
-# cmd=$(eval echo "$cmd1")
-#print_message "Sending query to sqlplus to execute $cmd1"
-#executeSQL "$cmd1"  "$pdbConnStr"
-
-
 }
 
 setupShardCDB()
@@ -342,6 +317,12 @@ setupShardCDB()
 localconnectStr="/as sysdba"
 
 print_message "Setting up Paramteres in Spfile"
+
+cmd1="alter system set db_recovery_file_dest_size=${DB_RECOVERY_FILE_DEST_SIZE} scope=both;"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
+
 cmd1="alter system set db_recovery_file_dest=\"${DB_RECOVERY_FILE_DEST}\" scope=both;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
@@ -428,12 +409,6 @@ executeSQL  "$cmd1"   "$localconnectStr"
 
 #cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$DB_HOST\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
 cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$DB_HOST)(PORT=$DB_PORT)(PROTOCOL=tcp))\" scope=both;"
-# cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL  "$cmd1"   "$localconnectStr"
-
-
-cmd1="alter system set db_recovery_file_dest_size=${DB_RECOVERY_FILE_DEST_SIZE} scope=both;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
