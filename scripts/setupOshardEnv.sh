@@ -271,7 +271,7 @@ executeSQL "$cmd1" "$systemStr"
 configureSampleAppSchema()
 {
 local sqlScript="/tmp/sqlScript.sql"
-connectStr = "pdbadmin/${ORACLE_PWD}"
+connectStr = "${SHARD_ADMIN_USER}/${ORACLE_PWD}"
 
 echo  "alter session enable shard ddl;" > ${sqlScript}
 echo  "create user app_schema identified by app_schema_password;" >> ${sqlScript}
@@ -574,6 +574,7 @@ while [ ${count} -lt 30  ]; do
         break
     fi
   sleep 60
+  count=$((count++))
 done
 fi
 
@@ -614,24 +615,20 @@ arrLen=$( echo "${#sarray[@]}" )
 count1=0
 while [ ${count1} -lt ${arrLen} ];
 do
- for element in "${sarray[@]}"
- do
    print_message "1st String in Shard params $element"
-     host=$( echo $element | awk -F: '{print $1 }')
-     db=$( echo $element | awk -F: '{print $2 }')
-     pdb=$( echo $element | awk -F: '{print $3 }')
+     host=$( echo ${sarray[$count1]}  | awk -F: '{print $1 }')
+     db=$( echo ${sarray[$count1]} | awk -F: '{print $2 }')
+     pdb=$( echo ${sarray[$count1]} | awk -F: '{print $3 }')
   if [ ! -z "${host}" ] && [ ! -z "${db}" ] && [ ! -z "${pdb}" ]
   then
      coutput=$( checkStatus $host $db $pdb )
      if [ "${coutput}" == 'completed' ] ;then
          configureGSMShard $host $db $pdb
-         count1=$( ${count1} + 1 ) 
+         count1=$((count1++)) 
      else
-      sleep 60 
+       sleep 60 
     fi
   fi
- done
-  print_message "Count set to $count1"
 done
 
 if [ "${coutput}" != 'completed' ] ;then
