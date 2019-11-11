@@ -521,6 +521,7 @@ local sstatus='false'
 
 setupGSMCatalog
 startGSM
+addShardGroup
 setupGSMShard
 
 }
@@ -529,6 +530,14 @@ startGSM()
 {
 
 cmd1="start gsm"
+print_message "Sending query to gsm to execute $cmd1"
+executeGSM "$cmd1"
+}
+
+addShardGroup()
+{
+
+cmd1="add shardgroup -shardgroup ${shardGName} -deploy_as ${deployment_type} -region ${region}"
 print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd1"
 }
@@ -601,7 +610,6 @@ local gdsScript="/tmp/gdsScript.sql"
 gsm_name="${SHARD_DIRECTOR_NAME}"
 echo "create shardcatalog -database \"(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=${chost})(PORT=${cport}))(CONNECT_DATA=(SERVICE_NAME=${cpdb})))\" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}" > "${gdsScript}"
 echo "add gsm -gsm ${gsm_name}  -listener 1521 -pwd ${cpasswd} -catalog ${chost}:${cport}/${cpdb}  -region region1" >> "${gdsScript}"
-echo "add shardgroup -shardgroup ${shardGName} -deploy_as ${deployment_type} -region ${region}" >> "${gdsScript}"
 echo "exit" >> "${gdsScript}"
 print_message "Sending script to gsm to execute ${gdsScript}"
 cat ${gdsScript} >> $LOGFILE
