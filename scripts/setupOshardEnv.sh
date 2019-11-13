@@ -60,13 +60,12 @@ else
         print_message "ORACLE_SID is set to $ORACLE_SID"
 fi
 
-if [ -z "${KUBE_SVC}" ]
+if [ -z "${ORACLE_HOSTNAME}" ]
 then
-       print_message "KUBE_SVC variable is not set"
-       export ORACLE_HOSTNAME=$(hostname)
+       print_message "ORACLE_HOSTNAME variable is not set"
+       export ORACLE_HOSTNAME="$(hostname).${KUBE_SVC}"
        print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
 else
-       ORACLE_HOSTNAME="$(hostname).${KUBE_SVC}"
        print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
 fi
 
@@ -137,6 +136,16 @@ if [ -z "${SHARD_DIRECTOR_NAME}" ]; then
         print_message  "SHARD_DIRECTOR_NAME is not set, it will set to sharddirector${region_num}"
         export SHARD_DIRECTOR_NAME="sharddirector${region_num}"
 fi
+
+if [ -z "${ORACLE_HOSTNAME}" ]
+then
+       print_message "ORACLE_HOSTNAME variable is not set"
+       export ORACLE_HOSTNAME="$(hostname).${KUBE_SVC}"
+       print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
+else
+       print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
+fi
+
 }
 
 ###################################### Function Related to Check end here ###################
