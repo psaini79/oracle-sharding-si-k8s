@@ -60,12 +60,13 @@ else
         print_message "ORACLE_SID is set to $ORACLE_SID"
 fi
 
-if [ -z "${ORACLE_HOSTNAME}" ]
+if [ -z "${KUBE_SVC}" ]
 then
-       print_message "ORACLE_HOSTNAME variable is not set"
+       print_message "KUBE_SVC variable is not set"
        export ORACLE_HOSTNAME=$(hostname)
        print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
 else
+       ORACLE_HOSTNAME="$(hostname).${KUBE_SVC}"
        print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
 fi
 
