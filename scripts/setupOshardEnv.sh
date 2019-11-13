@@ -60,13 +60,13 @@ else
         print_message "ORACLE_SID is set to $ORACLE_SID"
 fi
 
-if [ -z "$DB_HOST" ]
+if [ -z "${ORACLE_HOSTNAME}" ]
 then
-       print_message "DB_HOST variable is not set"
-       export DB_HOST=$(hostname)
-       print_message "DB_HOST is set to $DB_HOST"
+       print_message "ORACLE_HOSTNAME variable is not set"
+       export ORACLE_HOSTNAME=$(hostname)
+       print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
 else
-       print_message "DB_HOST is set to $DB_HOST"
+       print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
 fi
 
 if [ -z "$DB_PORT" ]
@@ -207,8 +207,8 @@ print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
 
 
-#cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$DB_HOST\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
-cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$DB_HOST)(PORT=$DB_PORT)(PROTOCOL=tcp))\" scope=both;"
+#cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$ORACLE_HOSTNAME\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
+cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$ORACLE_HOSTNAME)(PORT=$DB_PORT)(PROTOCOL=tcp))\" scope=both;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
@@ -301,7 +301,7 @@ executeSQL "$cmd1"  "$connectStr" "sqlScript" "${sqlScript}"
 
 setupCatalogPDB()
 {
-#pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${DB_HOST}:1521/${ORACLE_PDB}"
+#pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${ORACLE_HOSTNAME}:1521/${ORACLE_PDB}"
 pdbConnStr=" /as sysdba"
 
 local sqlScript="/tmp/sqlScript.sql"
@@ -326,7 +326,7 @@ executeSQL "$cmd1"   "${pdbConnStr}" "sqlScript" "${sqlScript}"
 setupShardPDB()
 {
 
-#pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${DB_HOST}:1521/${ORACLE_PDB}"
+#pdbConnStr="${PDB_ADMIN_USER}/${ORACLE_PWD}@//${ORACLE_HOSTNAME}:1521/${ORACLE_PDB}"
 pdbConnStr=" /as sysdba"
 
 local sqlScript="/tmp/sqlScript.sql"
@@ -445,8 +445,8 @@ print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
 
 
-#cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$DB_HOST\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
-cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$DB_HOST)(PORT=$DB_PORT)(PROTOCOL=tcp))\" scope=both;"
+#cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$ORACLE_HOSTNAME\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
+cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$ORACLE_HOSTNAME)(PORT=$DB_PORT)(PROTOCOL=tcp))\" scope=both;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
