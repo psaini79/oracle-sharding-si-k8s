@@ -62,9 +62,15 @@ fi
 
 if [ -z "${ORACLE_HOSTNAME}" ]
 then
+ if [ -z "${KUBE_SVC}" ]; then
+       print_message "ORACLE_HOSTNAME variable is not set"
+       export ORACLE_HOSTNAME="$(hostname)"
+       print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
+   else
        print_message "ORACLE_HOSTNAME variable is not set"
        export ORACLE_HOSTNAME="$(hostname).${KUBE_SVC}"
        print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
+ fi
 else
        print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
 fi
@@ -114,16 +120,23 @@ fi
 gsmChecks()
 {
  print_message "Performing GSM related checks"
- lordinal=$( hostname | awk -F "-" '{ print $NF }' )
- print_message "lordinal is set to ${lordinal}"
- region_num=$((lordinal+1))
-if [ -z "${REGION}" ]; then
+
+if [ ! -z "${KUBE_SVC}" ]; then
+  lordinal=$( hostname | awk -F "-" '{ print $NF }' )
+  print_message "lordinal is set to ${lordinal}"
+  region_num=$((lordinal+1))
+  if [ -z "${REGION}" ]; then
         print_message  "REGION is not set. Setting to region$lordinal"
         export REGION="region${region_num}"
-fi
+  fi
+else
+  if [ -z "${REGION}" ]; then
+        error_exit "REGION Canot be set to empty"
+  fi
+fi 
 
 if [ -z "${SHARD_GROUP_NAME}" ]; then
-        print_message  "SHARD_GROUP_NAME is not set, it will set to primary_shard"
+        print_message  "SHARD_GROUP_NAME is not set, it will be set to primary_shardgroup"
         export SHARD_GROUP_NAME="primary_shardgroup"
 fi
 
@@ -139,9 +152,15 @@ fi
 
 if [ -z "${ORACLE_HOSTNAME}" ]
 then
+ if [ -z "${KUBE_SVC}" ]; then
+       print_message "ORACLE_HOSTNAME variable is not set"
+       export ORACLE_HOSTNAME="$(hostname)"
+       print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
+   else
        print_message "ORACLE_HOSTNAME variable is not set"
        export ORACLE_HOSTNAME="$(hostname).${KUBE_SVC}"
        print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
+ fi
 else
        print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
 fi
@@ -544,6 +563,25 @@ print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd1"
 }
 
+stopGSM()
+{
+
+cmd1="stop gsm"
+print_message "Sending query to gsm to execute $cmd1"
+executeGSM "$cmd1"
+}
+
+addInvitedNode()
+{
+
+chost=$1
+
+cmd1="add invitednode $chost"
+print_message "Sending query to gsm to execute $cmd1"
+executeGSM "$cmd1"
+}
+
+
 addShardGroup()
 {
 
@@ -583,17 +621,19 @@ do
     pdb=$( echo $element | awk -F: '{print $3 }')
 done
 
-count=0
 if [ ! -z "${host}" ] && [ ! -z "${db}" ] && [ ! -z "${pdb}" ]
 then
-while [ ${count} -lt 30  ]; do
+runtime="30 minute"
+endtime=$(date -ud "$runtime" +%s)
+
+while [[ $(date -u +%s) -le $endtime ]]
+do
     coutput=$( checkStatus $host $db $pdb )
     if [ "${coutput}" == 'completed' ] ;then
         configureGSMCatalog $host $db $pdb
         break
     fi
   sleep 60
-  count=$((count++))
 done
 fi
 
@@ -609,6 +649,7 @@ chost=$1
 cport=1521
 cpdb=$3
 ccdb=$2
+gsmhost=${ORACLE_HOSTNAME}
 cadmin=${SHARD_ADMIN_USER}
 cpasswd=${ORACLE_PWD}
 ##########################
@@ -618,8 +659,9 @@ deployment_type="${SHARD_DEPLOYMENT_TYPE}"
 local gdsScript="/tmp/gdsScript.sql"
 
 gsm_name="${SHARD_DIRECTOR_NAME}"
-echo "create shardcatalog -database \"(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=${chost})(PORT=${cport}))(CONNECT_DATA=(SERVICE_NAME=${cpdb})))\" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd}" > "${gdsScript}"
-echo "add gsm -gsm ${gsm_name}  -listener 1521 -pwd ${cpasswd} -catalog ${chost}:${cport}/${cpdb}  -region region1" >> "${gdsScript}"
+echo "create shardcatalog -database \"(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=${chost})(PORT=${cport}))(CONNECT_DATA=(SERVICE_NAME=${cpdb})))\" -user ${cadmin}/${cpasswd} -sdb shardcatalog -region region1,region2 -agent_port 8080 -agent_password ${cpasswd} -autovncr off" > "${gdsScript}"
+echo "add invitednode ${chost}" >> "${gdsScript}"
+echo "add gsm -gsm ${gsm_name}  -listener 1521 -pwd ${cpasswd} -catalog ${chost}:${cport}/${cpdb}  -region region1 -endpoint '(ADDRESS=(PROTOCOL=tcp)(HOST=${gsmhost})(PORT=1521))'" >> "${gdsScript}"
 echo "exit" >> "${gdsScript}"
 print_message "Sending script to gsm to execute ${gdsScript}"
 cat ${gdsScript} >> $LOGFILE
@@ -631,28 +673,31 @@ setupGSMShard()
 IFS='; ' read -r -a sarray   <<< "$PRIMARY_SHARD_PARAMS"
 arrLen=$( echo "${#sarray[@]}" )
 count1=0
-while [ ${count1} -lt ${arrLen} ];
+
+runtime="30 minute"
+endtime=$(date -ud "$runtime" +%s)
+
+while [[ $(date -u +%s) -le $endtime ]]
 do
-   print_message "1st String in Shard params $element"
-     host=$( echo ${sarray[$count1]}  | awk -F: '{print $1 }')
-     db=$( echo ${sarray[$count1]} | awk -F: '{print $2 }')
-     pdb=$( echo ${sarray[$count1]} | awk -F: '{print $3 }')
-  if [ ! -z "${host}" ] && [ ! -z "${db}" ] && [ ! -z "${pdb}" ]
-  then
-     coutput=$( checkStatus $host $db $pdb )
-     if [ "${coutput}" == 'completed' ] ;then
-         configureGSMShard $host $db $pdb
-         count1=$((count1++)) 
-     else
-       sleep 60 
+ for i in ${!sarray[@]}; do
+      print_message "1st String in Shard params $element"
+      host=$( echo ${sarray[i]}  | awk -F: '{print $1 }')
+      db=$( echo ${sarray[i]} | awk -F: '{print $2 }')
+      pdb=$( echo ${sarray[i]} | awk -F: '{print $3 }')
+      if [ ! -z "${host}" ] && [ ! -z "${db}" ] && [ ! -z "${pdb}" ]
+      then
+        coutput=$( checkStatus $host $db $pdb )
+        if [ "${coutput}" == 'completed' ] ;then
+           configureGSMShard $host $db $pdb
+           unset sarray[i] 
+           ((++count1))
+        fi 
+      fi
+ done
+    if [ ${count1} -ge ${arrLen} ]; then
+      break;
     fi
-  fi
 done
-
-if [ "${coutput}" != 'completed' ] ;then
- error_exit "Shard is not readi, Unable to proceed futher"
-fi
-
 }
 
 configureGSMShard()
@@ -671,10 +716,22 @@ admuser="${SHARD_ADMIN_USER}"
 echo "connect ${admuser}/${cpasswd}" > "${gdsScript}" 
 echo "add cdb -connect ${chost}:${cport}:${ccdb} -pwd ${cpasswd}" >> "${gdsScript}"
 echo "add shard -cdb ${ccdb} -connect ${chost}:${cport}/${cpdb} -shardgroup ${shardGName} -pwd ${cpasswd}" >> "${gdsScript}"
+echo "config vncr" >> "${gdsScript}"
+echo "sql 'update gsmadmin_internal.database set hostid=NULL '" >>  "${gdsScript}"
 echo "exit" >> "${gdsScript}"
 print_message "Sending script to gsm to execute ${gdsScript}"
 cat ${gdsScript} >> $LOGFILE
 executeGSM "$cmd1" "gdsScript" "${gdsScript}"
+print_messahe " Calling Stop GSM function"
+stopGSM
+print_message "Stop GSM function completed, sleeping for 20 seconds"
+sleep 20
+print_messahe " Calling Start GSM function"
+startGSM
+print_message "Start GSM function completed, sleeping for 30 seconds"
+sleep 30
+print_message "Calling invitenode function to add the shard"
+addInvitedNode $chost
 }
 
 ####################################################################### GSM Setup Task Ends here #########################################
