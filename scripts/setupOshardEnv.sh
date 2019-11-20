@@ -1,16 +1,16 @@
 #!/bin/bash
 
-export LOGFILE="/tmp/oshard.log"
+export NOW=$(date +"%Y%m%d%H%M")
 export LOGDIR="/tmp"
+export LOGFILE="${LOGDIR}/oshard_${NOW}.log"
 export STD_OUT_FILE="/proc/1/fd/1"
 export STD_ERR_FILE="/proc/1/fd/2"
-export PASSWD_FILE="/etc/oraclepwd/password"
-export SHARD_ADMIN_USER="mysdbadmin"
-export PDB_ADMIN_USER="pdbadmin"
-export ORACLE_PWD=$(cat ${PASSWD_FILE} )
+declare -x SECRET_VOLUME='/run/secrets/'      ## Secret Volume
+declare -x PWD_KEY='pwd.key'                  ## PWD Key File
+declare -x COMMON_OS_PWD_FILE='common_os_pwdfile.enc'
+declare -x DB_PWD_FILE
 export PDB_SQL_SCRIPT="/tmp/pdb.sql"
 export TOP_PID=$$
-export GSM_HOST=$(hostname)
 rm -f /tmp/sqllog.output
 rm -f $PDB_SQL_SCRIPT
 rm -f $LOGFILE
@@ -52,8 +52,55 @@ else
          print_message "ORACLE_HOME Directory Exist"
 fi
 
+##################  Checks for Password and Clustername and clustertype begins here ###########
+if [ -f "${SECRET_VOLUME}/${COMMON_OS_PWD_FILE}" ]; then
+cmd='openssl enc -d -aes-256-cbc -in "${SECRET_VOLUME}/${COMMON_OS_PWD_FILE}" -out /tmp/${COMMON_OS_PWD_FILE} -pass file:"${SECRET_VOLUME}/${PWD_KEY}"'
+
+eval $cmd
+
+if [ $? -eq 0 ]; then
+print_message "Password file generated"
+else
+error_exit "Error occurred during common os password file generation"
+fi
+
+read PASSWORD < /tmp/${COMMON_OS_PWD_FILE}
+rm -f /tmp/${COMMON_OS_PWD_FILE}
+else
+ print_message "Password is empty string"
+ export PASSWORD=O$(openssl rand -base64 6 | tr -d "=+/")_1
+fi
+
+if [ -z "${ORACLE_PWD}" ]; then
+  print_message "Setting ORACLE_PWD to PASSWORD passed from encrypted files"
+  export ORACLE_PWD=${PASSWORD}
+else
+ print_message "ORACLE_PWD is set to user specified password"
+fi
+
+###################################################################################################
+
+
+if [ -z "${SHARD_ADMIN_USER}" ]
+then
+  print_message "SHARD_ADMIN_USER is not set, setting default to mysdbadmin"
+  export SHARD_ADMIN_USER="mysdbadmin"
+else
+ print_message "SHARD_ADMIn_USER set to $SHARD_ADMIN_USER"
+fi
+
+
+if [ -z "${PDB_ADMIN_USER}" ]
+then
+  print_message "PDB_ADMIN_USER is not set, setting default to PDBADMIN"
+  export PDB_ADMIN_USER="pdbadmin"
+else
+ print_message "PDB_ADMIN_USER set to $PDB_ADMIN_USER"
+fi
+
+
 # Validate the value of ORACLE_SID #
-if [ -z "$ORACLE_SID" ]
+if [ -z "${ORACLE_SID}" ]
 then
         error_exit "Set the ORACLE_SID variable"
 else
@@ -74,6 +121,8 @@ then
 else
        print_message "ORACLE_HOSTNAME is set to $ORACLE_HOSTNAME"
 fi
+
+
 
 if [ -z "$DB_PORT" ]
 then
@@ -134,6 +183,52 @@ else
         error_exit "REGION Canot be set to empty"
   fi
 fi 
+
+##################  Checks for Password and Clustername and clustertype begins here ###########
+if [ -f "${SECRET_VOLUME}/${COMMON_OS_PWD_FILE}" ]; then
+cmd='openssl enc -d -aes-256-cbc -in "${SECRET_VOLUME}/${COMMON_OS_PWD_FILE}" -out /tmp/${COMMON_OS_PWD_FILE} -pass file:"${SECRET_VOLUME}/${PWD_KEY}"'
+
+eval $cmd
+
+if [ $? -eq 0 ]; then
+print_message "Password file generated"
+else
+error_exit "Error occurred during common os password file generation"
+fi
+
+read PASSWORD < /tmp/${COMMON_OS_PWD_FILE}
+rm -f /tmp/${COMMON_OS_PWD_FILE}
+else
+ print_message "Password is empty string"
+ export PASSWORD=O$(openssl rand -base64 6 | tr -d "=+/")_1
+fi
+
+if [ -z "${ORACLE_PWD}" ]; then
+  print_message "Setting ORACLE_PWD to PASSWORD passed from encrypted files"
+  export ORACLE_PWD=${PASSWORD}
+else
+ print_message "ORACLE_PWD is set to user specified password"
+fi
+
+###################################################################################################
+
+if [ -z "$SHARD_ADMIN_USER" ]
+then
+  print_message "SHARD_ADMIN_USER is not set, setting default to mysdbadmin"
+  export SHARD_ADMIN_USER="mysdbadmin"
+else
+ print_message "SHARD_ADMIn_USER set to $SHARD_ADMIN_USER"
+fi
+
+
+if [ -z "$PDB_ADMIN_USER" ]
+then
+  print_message "PDB_ADMIN_USER is not set, setting default to PDBADMIN"
+  export PDB_ADMIN_USER="pdbadmin"
+else
+ print_message "PDB_ADMIN_USER set to $PDB_ADMIN_USER"
+fi
+
 
 if [ -z "${SHARD_GROUP_NAME}" ]; then
         print_message  "SHARD_GROUP_NAME is not set, it will be set to primary_shardgroup"
@@ -231,8 +326,7 @@ executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter user gsmcatuser identified by $ORACLE_PWD;"
-# cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
+print_message "Sending query to sqlplus to execute alter user gsmcatuser identified by ORACLE_PWD;"
 executeSQL  "$cmd1"   "$localconnectStr"
 
 
@@ -415,8 +509,7 @@ executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter user gsmrootuser identified by ${ORACLE_PWD}  container=all;"
-# cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
+print_message "Sending query to sqlplus to execute alter user gsmrootuser identified by ORACLE_PWD  container=all;"
 executeSQL  "$cmd1"   "$localconnectStr"
 
 
@@ -439,8 +532,7 @@ executeSQL  "$cmd1"   "$localconnectStr"
 
 
 cmd1="alter user GSMUSER identified by ${ORACLE_PWD} container=all;"
-# cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
+print_message "Sending query to sqlplus to execute alter user GSMUSER identified by ORACLE_PWD container=all;"
 executeSQL  "$cmd1"   "$localconnectStr"
 
 
@@ -563,6 +655,14 @@ print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd1"
 }
 
+deployShard()
+{
+
+cmd1="deploy"
+print_message "Sending query to gsm to execute $cmd1"
+executeGSM "$cmd1"
+}
+
 stopGSM()
 {
 
@@ -599,14 +699,22 @@ ccdb=$2
 uname="system"
 cpasswd=${ORACLE_PWD}
 
+print_message "Connect String $uname/$cpasswd@//$host:$port/$ccdb"
 output=$( "$ORACLE_HOME"/bin/sqlplus -s "$uname/$cpasswd@//$host:$port/$ccdb" <<EOF
-       set heading off feedback off verify off
+       set heading off feedback off verify off echo off PAGESIZE 0
        select status from shardsetup;
        exit
 EOF
 )
 
-echo $output
+ if [ "${output}" == 'completed' ];then
+   print_message "Returned status from catalog is $output"
+ else
+   print_message "Sleeping for 300 seconds as returned status is not $output "
+   sleep 300
+ fi
+
+ echo $output
 }
 
 setupGSMCatalog()
@@ -621,18 +729,23 @@ do
     pdb=$( echo $element | awk -F: '{print $3 }')
 done
 
+print_message "Set variables to  host=${host} db=${db} pdb=${pdb}"
 if [ ! -z "${host}" ] && [ ! -z "${db}" ] && [ ! -z "${pdb}" ]
 then
-runtime="30 minute"
+runtime="60 minute"
 endtime=$(date -ud "$runtime" +%s)
 
 while [[ $(date -u +%s) -le $endtime ]]
 do
+    
     coutput=$( checkStatus $host $db $pdb )
     if [ "${coutput}" == 'completed' ] ;then
         configureGSMCatalog $host $db $pdb
         break
+    else
+       print_message "Catalog Status must return completed but returned value is $coutput"
     fi
+  print_message "Catalog DB is still not ready. Sleeping for 60 seconds"
   sleep 60
 done
 fi
@@ -665,6 +778,7 @@ echo "add gsm -gsm ${gsm_name}  -listener 1521 -pwd ${cpasswd} -catalog ${chost}
 echo "exit" >> "${gdsScript}"
 print_message "Sending script to gsm to execute ${gdsScript}"
 cat ${gdsScript} >> $LOGFILE
+cp "${gdsScript}" "${gdsScript}.test"
 executeGSM "$cmd1" "gdsScript" "${gdsScript}"
 }
 
@@ -674,9 +788,10 @@ IFS='; ' read -r -a sarray   <<< "$PRIMARY_SHARD_PARAMS"
 arrLen=$( echo "${#sarray[@]}" )
 count1=0
 
-runtime="30 minute"
+runtime="45 minute"
 endtime=$(date -ud "$runtime" +%s)
 
+print_message "Set variables to  host=${host} db=${db} pdb=${pdb}"
 while [[ $(date -u +%s) -le $endtime ]]
 do
  for i in ${!sarray[@]}; do
@@ -684,6 +799,7 @@ do
       host=$( echo ${sarray[i]}  | awk -F: '{print $1 }')
       db=$( echo ${sarray[i]} | awk -F: '{print $2 }')
       pdb=$( echo ${sarray[i]} | awk -F: '{print $3 }')
+      print_message "shard env set to host=${host} db=${db} pdb=${pdb}"
       if [ ! -z "${host}" ] && [ ! -z "${db}" ] && [ ! -z "${pdb}" ]
       then
         coutput=$( checkStatus $host $db $pdb )
@@ -691,12 +807,16 @@ do
            configureGSMShard $host $db $pdb
            unset sarray[i] 
            ((++count1))
+       else
+          print_message "Catalog Status must return completed but returned value is $coutput"
         fi 
       fi
  done
     if [ ${count1} -ge ${arrLen} ]; then
       break;
     fi
+  print_message "Shards are still not ready. Sleeping for 120 seconds"
+  sleep 120
 done
 }
 
@@ -707,11 +827,11 @@ cport=1521
 cpdb=$3
 ccdb=$2
 cpasswd=${ORACLE_PWD}
-region="region1"
+region=${REGION}
 shardGName="${SHARD_GROUP_NAME}"
 deployment_type="${SHARD_DEPLOYMENT_TYPE}"
 local gdsScript="/tmp/gdsScript.sql"
-admuser="${SHARD_ADMIN_USER}"
+admuser="${PDB_ADMIN_USER}"
 
 echo "connect ${admuser}/${cpasswd}" > "${gdsScript}" 
 echo "add cdb -connect ${chost}:${cport}:${ccdb} -pwd ${cpasswd}" >> "${gdsScript}"
@@ -722,16 +842,17 @@ echo "exit" >> "${gdsScript}"
 print_message "Sending script to gsm to execute ${gdsScript}"
 cat ${gdsScript} >> $LOGFILE
 executeGSM "$cmd1" "gdsScript" "${gdsScript}"
-print_messahe " Calling Stop GSM function"
+print_message " Calling Stop GSM function"
 stopGSM
 print_message "Stop GSM function completed, sleeping for 20 seconds"
 sleep 20
-print_messahe " Calling Start GSM function"
+print_message " Calling Start GSM function"
 startGSM
 print_message "Start GSM function completed, sleeping for 30 seconds"
 sleep 30
 print_message "Calling invitenode function to add the shard"
 addInvitedNode $chost
+deployShard
 }
 
 ####################################################################### GSM Setup Task Ends here #########################################
@@ -745,7 +866,7 @@ type=$2
 gdsScript=$3
 
 if [ -z "${gsmQuery}" ]; then
-  print_message "Empty gdsQuery passed to sqlplus. Operation Failed"
+  print_message "Empty gdsQuery passed to gds"
 fi
 
 if [ -z "${type}" ]; then
@@ -760,7 +881,7 @@ if  [ "${type}" == "gdsScript" ]; then
 print_message "Executing gds script "
 "$ORACLE_HOME"/bin/gdsctl @${gdsScript}
 else
-print_message "Executing GSM query $gsmQuery"
+print_message "Executing GSM query"
 "$ORACLE_HOME"/bin/gdsctl << EOF >> $LOGFILE
  $gsmQuery
  exit
@@ -794,12 +915,12 @@ if [ -z "${sqlScript}" ]; then
 fi
 
 if  [ "${type}" == "sqlScript" ] && [ -f ${sqlScript} ]; then
-print_message "Executing sql script using connectString \"${connectStr}\""
+print_message "Executing sql script using connect string"
 "$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF >> $LOGFILE
 @ ${sqlScript}
 EOF
 else
-print_message "Executing query $sqlQuery using connectString \"${connectStr}\""
+print_message "Executing sqlQuery using connect string"
 "$ORACLE_HOME"/bin/sqlplus -s "$connectStr" << EOF >> $LOGFILE
 $sqlQuery
 EOF
@@ -835,4 +956,5 @@ elif [ "${OP_TYPE}" == "gsm" ]; then
   setupGSM
 else
   print_message "OP_TYPE must be set to (gsm|catalog|primaryshard|standbyshard)"
+  exit 15
 fi
