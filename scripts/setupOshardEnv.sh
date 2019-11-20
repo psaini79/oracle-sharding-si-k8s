@@ -5,9 +5,6 @@ export LOGDIR="/tmp"
 export LOGFILE="${LOGDIR}/oshard_${NOW}.log"
 export STD_OUT_FILE="/proc/1/fd/1"
 export STD_ERR_FILE="/proc/1/fd/2"
-declare -x SECRET_VOLUME='/run/secrets/'      ## Secret Volume
-declare -x PWD_KEY='pwd.key'                  ## PWD Key File
-declare -x COMMON_OS_PWD_FILE='common_os_pwdfile.enc'
 declare -x DB_PWD_FILE
 export PDB_SQL_SCRIPT="/tmp/pdb.sql"
 export TOP_PID=$$
@@ -51,6 +48,32 @@ then
 else
          print_message "ORACLE_HOME Directory Exist"
 fi
+############################# Secret Volumes and Password Files #############################
+if [ -z "$SECRET_VOLUME" ]
+then
+  print_message "Secret volume is not set. Setting default to /run/secrets"
+  export SECRET_VOLUME='/mnt/secrets'
+else
+ print_message "Secret Volume set to $SECRET_VOLUME"
+fi
+
+if [ -z "$PWD_KEY" ]
+then
+  print_message "PWD KEY is not set. Setting default pwd.key"
+  export PWD_KEY='pwd.key'
+else
+ print_message "PWD key is set to pwd.key"
+fi
+
+if [ -z "$COMMON_OS_PWD_FILE" ]
+then
+  print_message "COMMON_OS_PWD_FILE is not set. Setting default to common_os_pwdfile.enc"
+  export COMMON_OS_PWD_FILE='common_os_pwdfile.enc' 
+else
+ print_message "COMMON_OS_PWD_FILE to $COMMON_OS_PWD_FILE"
+fi
+
+###########################################################################################
 
 ##################  Checks for Password and Clustername and clustertype begins here ###########
 if [ -f "${SECRET_VOLUME}/${COMMON_OS_PWD_FILE}" ]; then
@@ -183,6 +206,33 @@ else
         error_exit "REGION Canot be set to empty"
   fi
 fi 
+
+############################# Secret Volumes and Password Files #############################
+if [ -z "$SECRET_VOLUME" ]
+then
+  print_message "Secret volume is not set. Setting default to /run/secrets"
+  export SECRET_VOLUME='/mnt/secrets'
+else
+ print_message "Secret Volume set to $SECRET_VOLUME"
+fi
+
+if [ -z "$PWD_KEY" ]
+then
+  print_message "PWD KEY is not set. Setting default pwd.key"
+  export PWD_KEY='pwd.key'
+else
+ print_message "PWD key is set to pwd.key"
+fi
+
+if [ -z "$COMMON_OS_PWD_FILE" ]
+then
+  print_message "COMMON_OS_PWD_FILE is not set. Setting default to common_os_pwdfile.enc"
+  export COMMON_OS_PWD_FILE='common_os_pwdfile.enc'
+else
+ print_message "COMMON_OS_PWD_FILE to $COMMON_OS_PWD_FILE"
+fi
+
+###########################################################################################
 
 ##################  Checks for Password and Clustername and clustertype begins here ###########
 if [ -f "${SECRET_VOLUME}/${COMMON_OS_PWD_FILE}" ]; then
