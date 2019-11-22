@@ -388,10 +388,10 @@ executeSQL  "$cmd1"   "$localconnectStr"
 
 
 #cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$ORACLE_HOSTNAME\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
-cmd1="alter system set remote_listener='gsmhost-0.gsmhost:$DB_PORT' scope=both;"
+#cmd1="alter system set remote_listener='gsmhost-0.gsmhost:$DB_PORT' scope=both;"
 # cmd=$(eval echo "$cmd1")
-print_message "Sending query to sqlplus to execute $cmd1"
-executeSQL  "$cmd1"   "$localconnectStr"
+#print_message "Sending query to sqlplus to execute $cmd1"
+#executeSQL  "$cmd1"   "$localconnectStr"
 
 cmd1="shutdown immediate;"
 # cmd=$(eval echo "$cmd1")
@@ -736,6 +736,16 @@ print_message "Sending query to gsm to execute $cmd1"
 executeGSM "$cmd1"
 }
 
+removeInvitedNode()
+{
+
+chost=$1
+
+cmd1="remove invitednode $chost"
+print_message "Sending query to gsm to execute $cmd1"
+executeGSM "$cmd1"
+}
+
 
 addShardGroup()
 {
@@ -907,6 +917,21 @@ print_message "Start GSM function completed, sleeping for 30 seconds"
 sleep 30
 print_message "Calling invitenode function to add the shard"
 addInvitedNode $chost
+if [ ! -z "${KUBE_SVC}" ]; then
+       print_message "KUBE_SVC is set. Remove the KUBE_SVC from hostname"
+       lhost=$( cut -d "." -f 1 <<< "$chost" )
+       print_message " Removing unreachable listener $lhost"
+       removeInvitedNode $lhost
+fi
+
+print_message " Calling Stop GSM function"
+stopGSM
+print_message "Stop GSM function completed, sleeping for 20 seconds"
+sleep 20
+print_message " Calling Start GSM function"
+startGSM
+print_message "Start GSM function completed, sleeping for 30 seconds"
+sleep 30
 deployShard
 }
 
