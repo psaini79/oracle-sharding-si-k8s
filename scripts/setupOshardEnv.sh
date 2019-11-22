@@ -51,7 +51,7 @@ fi
 ############################# Secret Volumes and Password Files #############################
 if [ -z "$SECRET_VOLUME" ]
 then
-  print_message "Secret volume is not set. Setting default to /run/secrets"
+  print_message "Secret volume is not set. Setting default to /mnt/secrets"
   export SECRET_VOLUME='/mnt/secrets'
 else
  print_message "Secret Volume set to $SECRET_VOLUME"
@@ -381,7 +381,7 @@ executeSQL  "$cmd1"   "$localconnectStr"
 
 
 #cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$ORACLE_HOSTNAME\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
-cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$ORACLE_HOSTNAME)(PORT=$DB_PORT)(PROTOCOL=tcp))\" scope=both;"
+cmd1="alter system set local_listener='$ORACLE_HOSTNAME:$DB_PORT' scope=both;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
@@ -617,7 +617,7 @@ executeSQL  "$cmd1"   "$localconnectStr"
 
 
 #cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$ORACLE_HOSTNAME\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
-cmd1="alter system set remote_listener=\"(ADDRESS=(HOST=$ORACLE_HOSTNAME)(PORT=$DB_PORT)(PROTOCOL=tcp))\" scope=both;"
+cmd1="alter system set local_listener='$ORACLE_HOSTNAME:$DB_PORT' scope=both;"
 # cmd=$(eval echo "$cmd1")
 print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
