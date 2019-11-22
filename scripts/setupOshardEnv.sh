@@ -387,6 +387,11 @@ print_message "Sending query to sqlplus to execute $cmd1"
 executeSQL  "$cmd1"   "$localconnectStr"
 
 
+#cmd1="alter system set remote_listener=\"\(ADDRESS=\(HOST=$ORACLE_HOSTNAME\)\(PORT=$DB_PORT\)\(PROTOCOL=tcp\)\)\";"
+cmd1="alter system set remote_listener='gsmhost-0.gsmhost:$DB_PORT' scope=both;"
+# cmd=$(eval echo "$cmd1")
+print_message "Sending query to sqlplus to execute $cmd1"
+executeSQL  "$cmd1"   "$localconnectStr"
 
 cmd1="shutdown immediate;"
 # cmd=$(eval echo "$cmd1")
